@@ -34,7 +34,7 @@
 				<configuration>
 					<archive>
 						<manifestEntries>
-							<Pact-Assembler-Class>eu.stratosphere.pact.example.wordcount.WordCount</Pact-Assembler-Class>
+							<Pact-Assembler-Class>de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking</Pact-Assembler-Class>
 						</manifestEntries>
 					</archive>
 				</configuration>

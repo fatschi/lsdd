@@ -1,7 +1,6 @@
 bin/
 data/
-hamlet.txt
 stratosphere-0.2/
 target/
-wordCountResult/
+out/
 
