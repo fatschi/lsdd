@@ -16,14 +16,12 @@
 			<artifactId>pact-common</artifactId>
 			<version>0.2</version>
 			<type>jar</type>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>eu.stratosphere</groupId>
 			<artifactId>pact-clients</artifactId>
 			<version>0.1.2</version>
 			<type>jar</type>
-			<scope>compile</scope>
 		</dependency>
 	</dependencies>
 	<build>
@@ -31,17 +29,22 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.2</version>
 				<configuration>
 					<archive>
 						<manifestEntries>
 							<Pact-Assembler-Class>de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking</Pact-Assembler-Class>
 						</manifestEntries>
 					</archive>
+					<includes>
+						<include>**/*.class</include>
+					</includes>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.0.2</version>
 				<configuration>
 					<source>1.6</source>
 					<target>1.6</target>
