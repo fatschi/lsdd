@@ -272,7 +272,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 
 		@Override
 		public void map(PactRecord record, Collector<PactRecord> collector) {
-			if (record.getField(record.getNumFields(), PactInteger.class)
+			if (record.getField(record.getNumFields()-1, PactInteger.class)
 					.getValue() <= THRESHOLD)
 				collector.collect(record);
 		}
