@@ -44,7 +44,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public Plan getPlan(final String... args) {
 		// parse program parameters
 		/*
-		 * 4 file:///home/fabian/lsdd/data/mini.csv file:///home/fabian/lsdd/data/freedb_tracks.csv file:///home/fabian/lsdd/out
+		 * 4 file:///home/fabian/lsdd/data/mini.csv
+		 * file:///home/fabian/lsdd/data/freedb_tracks.csv
+		 * file:///home/fabian/lsdd/out
 		 */
 		final int noSubtasks = (args.length > 0 ? Integer.parseInt(args[0]) : 1);
 		final String inputFileDiscs = (args.length > 1 ? args[1] : "");
@@ -84,7 +86,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.name("filter balanced blocks step").build();
 		ReduceContract matchStepReducer = new ReduceContract.Builder(
 				MatchStep.class, PactString.class, 9)
-				.input(unbalancedBlockFilterMapper).name("match step").build();
+				.input(firstBlockingStepMapper).name("match step").build();
 		FileDataSink out = new FileDataSink(RecordOutputFormat.class, output,
 				matchStepReducer, "Output");
 		RecordOutputFormat.configureRecordFormat(out).recordDelimiter('\n')
@@ -146,7 +148,6 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				record = records.next();
 				r_temp.add(record);
 			}
-			System.out.println(r_temp.size());
 			for (int i = 0; i < r_temp.size(); i++) {
 				for (int j = 0; j < r_temp.size(); j++) {
 					PactRecord r1 = r_temp.get(i);
@@ -166,8 +167,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 												.getValue(),
 										r2.getField(3, PactString.class)
 												.getValue())));
-						outputRecord.setField(
-								3,
+						outputRecord.setField(3,
 								r1.getField(9, PactString.class));
 						out.collect(outputRecord);
 					}
