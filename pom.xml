@@ -18,6 +18,12 @@
 			<type>jar</type>
 		</dependency>
 		<dependency>
+			<groupId>uk.ac.shef.wit</groupId>
+			<artifactId>simmetrics</artifactId>
+			<version>1.6.2</version>
+			<type>jar</type>
+		</dependency>
+		<dependency>
 			<groupId>eu.stratosphere</groupId>
 			<artifactId>pact-clients</artifactId>
 			<version>0.1.2</version>
@@ -28,8 +34,15 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.2</version>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.0.2</version>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
 				<configuration>
 					<archive>
 						<manifestEntries>
@@ -39,16 +52,18 @@
 					<includes>
 						<include>**/*.class</include>
 					</includes>
+					<descriptors>
+						<descriptor>assembly.xml</descriptor>
+					</descriptors>
 				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.0.2</version>
-				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
-				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 
