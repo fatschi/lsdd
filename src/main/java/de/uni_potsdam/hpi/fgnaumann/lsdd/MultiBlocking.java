@@ -23,6 +23,8 @@ import eu.stratosphere.pact.common.plan.PlanAssemblerDescription;
 import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.stubs.MapStub;
 import eu.stratosphere.pact.common.stubs.ReduceStub;
+import eu.stratosphere.pact.common.stubs.StubAnnotation.ConstantFields;
+import eu.stratosphere.pact.common.stubs.StubAnnotation.OutCardBounds;
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactDouble;
 import eu.stratosphere.pact.common.type.base.PactInteger;
@@ -44,9 +46,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public Plan getPlan(final String... args) {
 		// parse program parameters
 		/*
-		 * 4 file:///home/fabian/lsdd/data/mini.csv
-		 * file:///home/fabian/lsdd/data/freedb_tracks.csv
-		 * file:///home/fabian/lsdd/out
+		 * 4 file:///home/fabian/lsdd/data/mini.csv file:///home/fabian/lsdd/data/freedb_tracks.csv file:///home/fabian/lsdd/out
 		 */
 		final int noSubtasks = (args.length > 0 ? Integer.parseInt(args[0]) : 1);
 		final String inputFileDiscs = (args.length > 1 ? args[1] : "");
@@ -73,7 +73,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		MapContract firstBlockingStepMapper = MapContract
 				.builder(FirstBlockingStep.class).input(discs)
 				.name("first blocking step").build();
-		ReduceContract countStepReducer = new ReduceContract.Builder(
+		/*ReduceContract countStepReducer = new ReduceContract.Builder(
 				CountStep.class, PactString.class, 9)
 				.input(firstBlockingStepMapper).name("count records step")
 				.build();
@@ -83,9 +83,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.build();
 		MapContract balancedBlockFilterMapper = MapContract
 				.builder(BalancedBlockFilterStep.class).input(countStepReducer)
-				.name("filter balanced blocks step").build();
+				.name("filter balanced blocks step").build();*/
 		ReduceContract matchStepReducer = new ReduceContract.Builder(
-				MatchStep.class, PactString.class, 9)
+				MatchStep.class, PactString.class, 8)
 				.input(firstBlockingStepMapper).name("match step").build();
 		FileDataSink out = new FileDataSink(RecordOutputFormat.class, output,
 				matchStepReducer, "Output");
@@ -124,9 +124,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 			String year = record.getField(5, PactString.class).getValue()
 					.replace("\"", "");
 			year = year.length() >= 4 ? year.substring(0, 3) : "";
-			PactString blockingKey = new PactString(genre);
+			PactString blockingKey = new PactString(genre+year);
 			AsciiUtils.toLowerCase(blockingKey);
-			record.setField(9, blockingKey);
+			record.setField(8, blockingKey);
 			collector.collect(record);
 		}
 	}
@@ -167,14 +167,14 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 												.getValue(),
 										r2.getField(3, PactString.class)
 												.getValue())));
-						outputRecord.setField(3,
-								r1.getField(9, PactString.class));
+						outputRecord.setField(
+								3,
+								r1.getField(8, PactString.class));
 						out.collect(outputRecord);
 					}
 				}
 			}
 		}
-
 	}
 
 	/**
