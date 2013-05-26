@@ -141,17 +141,43 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 
 		@Override
 		public void map(PactRecord record, Collector<PactRecord> collector) {
-			String genre = record.getField(4, PactString.class).getValue()
-					.replace("\"", "");
-			genre = genre.length() > 2 ? genre.substring(0, 2) : "";
-			String year = record.getField(5, PactString.class).getValue()
-					.replace("\"", "");
-			year = year.length() >= 4 ? year.substring(0, 3) : "";
-			PactString blockingKey = new PactString(genre + year);
-			AsciiUtils.toLowerCase(blockingKey);
-			record.setField(9, blockingKey);
-			collector.collect(record);
+			BlockingFunction bf1 = new BlockingFunction(record){
+				@Override
+				PactString function() {
+					String genre = record.getField(4, PactString.class).getValue()
+							.replace("\"", "");
+					genre = genre.length() > 2 ? genre.substring(0, 2) : "";
+					String year = record.getField(5, PactString.class).getValue()
+							.replace("\"", "");
+					year = year.length() >= 4 ? year.substring(0, 3) : "";
+					PactString blockingKey = new PactString(genre + year);
+					AsciiUtils.toLowerCase(blockingKey);
+					return blockingKey;
+				}
+				
+			};
+			BlockingFunction bf2 = new BlockingFunction(record){
+				@Override
+				PactString function() {
+					String artist = record.getField(2, PactString.class).getValue()
+							.replace("\"", "");
+					artist = artist.length() > 2 ? artist.substring(0, 2) : "";
+					String year = record.getField(5, PactString.class).getValue()
+							.replace("\"", "");
+					year = year.length() >= 4 ? year.substring(0, 3) : "";
+					PactString blockingKey = new PactString(artist + year);
+					AsciiUtils.toLowerCase(blockingKey);
+					return blockingKey;
+				}
+				
+			};
+			PactRecord rbf1 = bf1.copyWithBlockingKey(record);
+			collector.collect(rbf1);
+			PactRecord rbf2 = bf2.copyWithBlockingKey(record);
+			collector.collect(rbf2);
 		}
+		
+		
 	}
 
 	/**
