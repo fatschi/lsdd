@@ -5,6 +5,8 @@
 package de.uni_potsdam.hpi.fgnaumann.lsdd;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -12,6 +14,7 @@ import uk.ac.shef.wit.simmetrics.similaritymetrics.AbstractStringMetric;
 import uk.ac.shef.wit.simmetrics.similaritymetrics.Levenshtein;
 import eu.stratosphere.pact.common.contract.FileDataSink;
 import eu.stratosphere.pact.common.contract.FileDataSource;
+import eu.stratosphere.pact.common.contract.GenericDataSink;
 import eu.stratosphere.pact.common.contract.MapContract;
 import eu.stratosphere.pact.common.contract.ReduceContract;
 import eu.stratosphere.pact.common.contract.ReduceContract.Combinable;
@@ -23,8 +26,6 @@ import eu.stratosphere.pact.common.plan.PlanAssemblerDescription;
 import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.stubs.MapStub;
 import eu.stratosphere.pact.common.stubs.ReduceStub;
-import eu.stratosphere.pact.common.stubs.StubAnnotation.ConstantFields;
-import eu.stratosphere.pact.common.stubs.StubAnnotation.OutCardBounds;
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactDouble;
 import eu.stratosphere.pact.common.type.base.PactInteger;
@@ -46,7 +47,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public Plan getPlan(final String... args) {
 		// parse program parameters
 		/*
-		 * 4 file:///home/fabian/lsdd/data/mini.csv file:///home/fabian/lsdd/data/freedb_tracks.csv file:///home/fabian/lsdd/out
+		 * 4 file:///home/fabian/lsdd/data/mini.csv
+		 * file:///home/fabian/lsdd/data/freedb_tracks.csv
+		 * file:///home/fabian/lsdd/out
 		 */
 		final int noSubtasks = (args.length > 0 ? Integer.parseInt(args[0]) : 1);
 		final String inputFileDiscs = (args.length > 1 ? args[1] : "");
@@ -73,7 +76,8 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		MapContract firstBlockingStepMapper = MapContract
 				.builder(FirstBlockingStep.class).input(discs)
 				.name("first blocking step").build();
-		/*ReduceContract countStepReducer = new ReduceContract.Builder(
+
+		ReduceContract countStepReducer = new ReduceContract.Builder(
 				CountStep.class, PactString.class, 9)
 				.input(firstBlockingStepMapper).name("count records step")
 				.build();
@@ -83,19 +87,38 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.build();
 		MapContract balancedBlockFilterMapper = MapContract
 				.builder(BalancedBlockFilterStep.class).input(countStepReducer)
-				.name("filter balanced blocks step").build();*/
-		ReduceContract matchStepReducer = new ReduceContract.Builder(
-				MatchStep.class, PactString.class, 8)
-				.input(firstBlockingStepMapper).name("match step").build();
+				.name("filter balanced blocks step").build();
+		
+		FileDataSink outUnbalanced = new FileDataSink(RecordOutputFormat.class, output+"/unbalanced",
+				balancedBlockFilterMapper, "Output Unbalanced");
+		
+		RecordOutputFormat.configureRecordFormat(outUnbalanced).recordDelimiter('\n')
+		.fieldDelimiter(';').lenient(true).field(PactInteger.class, 0) // disc_id
+		.field(PactInteger.class, 1) // freedbdiscid
+		.field(PactString.class, 2) // "artist_name"
+		.field(PactString.class, 3) // "disc_title"
+		.field(PactString.class, 4) // "genre_title"
+		.field(PactString.class, 5) // "disc_released"
+		.field(PactInteger.class, 6) // disc_tracks
+		.field(PactInteger.class, 7)
+		.field(PactString.class, 8)// disc_seconds
+		.field(PactString.class, 9); // "blockingKey"
+
+		ReduceContract matchStepReducerBalanced = new ReduceContract.Builder(
+				MatchStep.class, PactString.class, 9)
+				.input(unbalancedBlockFilterMapper).name("match step").build();
 		FileDataSink out = new FileDataSink(RecordOutputFormat.class, output,
-				matchStepReducer, "Output");
+				matchStepReducerBalanced, "Output");
 		RecordOutputFormat.configureRecordFormat(out).recordDelimiter('\n')
 				.fieldDelimiter(' ').lenient(true).field(PactInteger.class, 0)
 				.field(PactInteger.class, 1).field(PactDouble.class, 2)
 				.field(PactString.class, 3);
 
 		// assemble the PACT plan
-		Plan plan = new Plan(out, "MultiBlocking");
+		Collection<GenericDataSink> sinks = new HashSet<GenericDataSink>();
+		sinks.add(out);
+		sinks.add(outUnbalanced);
+		Plan plan = new Plan(sinks, "MultiBlocking");
 		plan.setDefaultParallelism(noSubtasks);
 		return plan;
 	}
@@ -124,9 +147,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 			String year = record.getField(5, PactString.class).getValue()
 					.replace("\"", "");
 			year = year.length() >= 4 ? year.substring(0, 3) : "";
-			PactString blockingKey = new PactString(genre+year);
+			PactString blockingKey = new PactString(genre + year);
 			AsciiUtils.toLowerCase(blockingKey);
-			record.setField(8, blockingKey);
+			record.setField(9, blockingKey);
 			collector.collect(record);
 		}
 	}
@@ -146,7 +169,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 			List<PactRecord> r_temp = new ArrayList<PactRecord>();
 			while (records.hasNext()) {
 				record = records.next();
-				r_temp.add(record);
+				r_temp.add(record.createCopy());
 			}
 			for (int i = 0; i < r_temp.size(); i++) {
 				for (int j = 0; j < r_temp.size(); j++) {
@@ -154,7 +177,10 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 					PactRecord r2 = r_temp.get(j);
 					AbstractStringMetric dist = new Levenshtein();
 					if (!(r1.getField(0, PactInteger.class).equals(r2.getField(
-							0, PactInteger.class)))) {
+							0, PactInteger.class)))
+							&& dist.getSimilarity(
+									r1.getField(3, PactString.class).getValue(),
+									r2.getField(3, PactString.class).getValue()) > 0.9) {
 						PactRecord outputRecord = new PactRecord();
 						outputRecord.setField(0,
 								r1.getField(0, PactInteger.class));
@@ -167,9 +193,8 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 												.getValue(),
 										r2.getField(3, PactString.class)
 												.getValue())));
-						outputRecord.setField(
-								3,
-								r1.getField(8, PactString.class));
+						outputRecord.setField(3,
+								r1.getField(9, PactString.class));
 						out.collect(outputRecord);
 					}
 				}
@@ -195,7 +220,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 			int sum = 0;
 			while (records.hasNext()) {
 				outputRecord = records.next();
-				r_temp.add(outputRecord);
+				r_temp.add(outputRecord.createCopy());
 				sum++;
 			}
 			PactInteger cnt = new PactInteger();

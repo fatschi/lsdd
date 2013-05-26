@@ -49,10 +49,11 @@
 							<Pact-Assembler-Class>de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking</Pact-Assembler-Class>
 						</manifestEntries>
 					</archive>
-					<!-- hier bin ich mir nicht sicher -->
+					<!-- hier bin ich mir nicht sicher
 					<includes>
 						<include>**/*.class</include>
 					</includes>
+					-->
 					<descriptors>
 						<descriptor>assembly.xml</descriptor>
 					</descriptors>
