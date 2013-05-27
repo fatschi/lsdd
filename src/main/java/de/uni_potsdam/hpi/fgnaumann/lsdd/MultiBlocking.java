@@ -141,9 +141,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 
 		@Override
 		public void map(PactRecord record, Collector<PactRecord> collector) {
-			BlockingFunction bf1 = new BlockingFunction(record){
+			BlockingFunction bf1 = new BlockingFunction(){
 				@Override
-				PactString function() {
+				PactString function(PactRecord record) {
 					String genre = record.getField(4, PactString.class).getValue()
 							.replace("\"", "");
 					genre = genre.length() > 2 ? genre.substring(0, 2) : "";
@@ -156,9 +156,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				}
 				
 			};
-			BlockingFunction bf2 = new BlockingFunction(record){
+			BlockingFunction bf2 = new BlockingFunction(){
 				@Override
-				PactString function() {
+				PactString function(PactRecord record) {
 					String artist = record.getField(2, PactString.class).getValue()
 							.replace("\"", "");
 					artist = artist.length() > 2 ? artist.substring(0, 2) : "";

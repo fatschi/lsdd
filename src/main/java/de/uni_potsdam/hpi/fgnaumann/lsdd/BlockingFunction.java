@@ -4,17 +4,12 @@ import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactString;
 
 public abstract class BlockingFunction {
-	protected PactRecord record;
 	
-	BlockingFunction(PactRecord record){
-		this.record = record;
-	}
-	
-	abstract PactString function();
+	abstract PactString function(PactRecord record);
 	
 	public PactRecord copyWithBlockingKey(PactRecord record){
 		PactRecord nr = record.createCopy();
-		nr.addField(function());
+		nr.addField(function(record));
 		return nr;
 	}
 }
