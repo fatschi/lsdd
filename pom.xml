@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni_potsdam.hpi.fgnaumann.lsdd</groupId>
 	<artifactId>MultiBlocking</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0</version>
 	<repositories>
 		<repository>
 			<id>stratosphere.eu</id>
@@ -14,6 +14,12 @@
 		<dependency>
 			<groupId>eu.stratosphere</groupId>
 			<artifactId>pact-common</artifactId>
+			<version>0.2</version>
+			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>eu.stratosphere</groupId>
+			<artifactId>sopremo-common</artifactId>
 			<version>0.2</version>
 			<type>jar</type>
 		</dependency>
@@ -34,6 +40,38 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.2</version>
+				<executions>
+
+					<!-- CombineCDswithTracks -->
+					<execution>
+						<id>CombineCDswithTracks</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+
+						<configuration>
+							<classifier>CombineCDswithTracks</classifier>
+
+							<archive>
+								<manifestEntries>
+									<Pact-Assembler-Class>de.uni_potsdam.hpi.fgnaumann.lsdd.CombineCDswithTracks</Pact-Assembler-Class>
+								</manifestEntries>
+							</archive>
+
+							<includes>
+								<include>**/CombineCDswithTracks.class</include>
+								<include>**/CombineCDswithTracks$*.class</include>
+								<include>**/TrackList.class</include>
+							</includes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.0.2</version>
 				<configuration>
@@ -49,11 +87,12 @@
 							<Pact-Assembler-Class>de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking</Pact-Assembler-Class>
 						</manifestEntries>
 					</archive>
-					<!-- hier bin ich mir nicht sicher
-					<includes>
-						<include>**/*.class</include>
-					</includes>
-					-->
+					<!-- <includes>
+						<include>**/MultiBlocking.class</include>
+						<include>**/MultiBlocking$*.class</include>
+						<include>**/AsciiUtils.class</include>
+						<include>**/BlockingFunction.class</include>
+					</includes> -->
 					<descriptors>
 						<descriptor>assembly.xml</descriptor>
 					</descriptors>

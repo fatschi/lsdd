@@ -10,8 +10,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import de.uni_potsdam.hpi.fgnaumann.lsdd.CombineCDswithTracks.CoGroupCDsWithTracks;
+
 import uk.ac.shef.wit.simmetrics.similaritymetrics.AbstractStringMetric;
 import uk.ac.shef.wit.simmetrics.similaritymetrics.Levenshtein;
+import eu.stratosphere.pact.common.contract.CoGroupContract;
 import eu.stratosphere.pact.common.contract.FileDataSink;
 import eu.stratosphere.pact.common.contract.FileDataSource;
 import eu.stratosphere.pact.common.contract.GenericDataSink;
@@ -23,6 +26,7 @@ import eu.stratosphere.pact.common.io.RecordOutputFormat;
 import eu.stratosphere.pact.common.plan.Plan;
 import eu.stratosphere.pact.common.plan.PlanAssembler;
 import eu.stratosphere.pact.common.plan.PlanAssemblerDescription;
+import eu.stratosphere.pact.common.stubs.CoGroupStub;
 import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.stubs.MapStub;
 import eu.stratosphere.pact.common.stubs.ReduceStub;
@@ -72,13 +76,32 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.field(DecimalTextIntParser.class, 7) // disc_seconds
 				.field(VarLengthStringParser.class, 8); // "disc_language"
 
+		// create DataSourceContract for tracks input
+		// disc_id;track_number;"track_title";"artist_name";track_seconds
+		// 2;1;"Intro+Chor Der Kriminalbeamten";"Kottans Kapelle";115
+		FileDataSource tracks = new FileDataSource(RecordInputFormat.class,
+				inputFileTracks, "Tracks");
+		RecordInputFormat.configureRecordFormat(tracks).recordDelimiter('\n')
+				.fieldDelimiter(';').field(DecimalTextIntParser.class, 0) // disc_id
+				.field(DecimalTextIntParser.class, 1) // freedbdiscid
+				.field(VarLengthStringParser.class, 2) // "track_title"
+				.field(VarLengthStringParser.class, 3) // "artist_name"
+				.field(DecimalTextIntParser.class, 4); // track_seconds
+
+		CoGroupContract coGrouper = CoGroupContract
+				.builder(CoGroupCDsWithTracks.class, PactInteger.class, 0, 0)
+				.name("Group CDs with Tracks").build();
+
+		coGrouper.setFirstInput(discs);
+		coGrouper.setSecondInput(tracks);
+		
 		//
 		MapContract firstBlockingStepMapper = MapContract
-				.builder(FirstBlockingStep.class).input(discs)
+				.builder(FirstBlockingStep.class).input(coGrouper)
 				.name("first blocking step").build();
 
 		ReduceContract countStepReducer = new ReduceContract.Builder(
-				CountStep.class, PactString.class, 9)
+				CountStep.class, PactString.class, 10)
 				.input(firstBlockingStepMapper).name("count records step")
 				.build();
 		MapContract unbalancedBlockFilterMapper = MapContract
@@ -88,31 +111,32 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		MapContract balancedBlockFilterMapper = MapContract
 				.builder(BalancedBlockFilterStep.class).input(countStepReducer)
 				.name("filter balanced blocks step").build();
-		
-		FileDataSink outUnbalanced = new FileDataSink(RecordOutputFormat.class, output+"/unbalanced",
-				balancedBlockFilterMapper, "Output Unbalanced");
-		
-		RecordOutputFormat.configureRecordFormat(outUnbalanced).recordDelimiter('\n')
-		.fieldDelimiter(';').lenient(true).field(PactInteger.class, 0) // disc_id
-		.field(PactInteger.class, 1) // freedbdiscid
-		.field(PactString.class, 2) // "artist_name"
-		.field(PactString.class, 3) // "disc_title"
-		.field(PactString.class, 4) // "genre_title"
-		.field(PactString.class, 5) // "disc_released"
-		.field(PactInteger.class, 6) // disc_tracks
-		.field(PactInteger.class, 7)
-		.field(PactString.class, 8)// disc_seconds
-		.field(PactString.class, 9); // "blockingKey"
+
+		FileDataSink outUnbalanced = new FileDataSink(RecordOutputFormat.class,
+				output + "/unbalanced", balancedBlockFilterMapper,
+				"Output Unbalanced");
+
+		RecordOutputFormat.configureRecordFormat(outUnbalanced)
+				.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
+				.field(PactInteger.class, 0) // disc_id
+				.field(PactInteger.class, 1) // freedbdiscid
+				.field(PactString.class, 2) // "artist_name"
+				.field(PactString.class, 3) // "disc_title"
+				.field(PactString.class, 4) // "genre_title"
+				.field(PactString.class, 5) // "disc_released"
+				.field(PactInteger.class, 6) // disc_tracks
+				.field(PactInteger.class, 7).field(PactString.class, 8)// disc_seconds
+				.field(TrackList.class, 9) // "trackList"
+				.field(PactString.class, 10); // "blockingKey"
 
 		ReduceContract matchStepReducerBalanced = new ReduceContract.Builder(
-				MatchStep.class, PactString.class, 9)
+				MatchStep.class, PactString.class, 10)
 				.input(unbalancedBlockFilterMapper).name("match step").build();
 		FileDataSink out = new FileDataSink(RecordOutputFormat.class, output,
 				matchStepReducerBalanced, "Output");
 		RecordOutputFormat.configureRecordFormat(out).recordDelimiter('\n')
 				.fieldDelimiter(' ').lenient(true).field(PactInteger.class, 0)
-				.field(PactInteger.class, 1).field(PactDouble.class, 2)
-				.field(PactString.class, 3);
+				.field(PactInteger.class, 1);
 
 		// assemble the PACT plan
 		Collection<GenericDataSink> sinks = new HashSet<GenericDataSink>();
@@ -138,8 +162,8 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	 * 
 	 */
 	public static class FirstBlockingStep extends MapStub {
-		
-		BlockingFunction bf1 = new BlockingFunction(){
+
+		BlockingFunction bf1 = new BlockingFunction() {
 			@Override
 			PactString function(PactRecord record) {
 				String genre = record.getField(4, PactString.class).getValue()
@@ -152,10 +176,10 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				AsciiUtils.toLowerCase(blockingKey);
 				return blockingKey;
 			}
-			
+
 		};
-		
-		BlockingFunction bf2 = new BlockingFunction(){
+
+		BlockingFunction bf2 = new BlockingFunction() {
 			@Override
 			PactString function(PactRecord record) {
 				String artist = record.getField(2, PactString.class).getValue()
@@ -168,7 +192,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				AsciiUtils.toLowerCase(blockingKey);
 				return blockingKey;
 			}
-			
+
 		};
 
 		@Override
@@ -178,8 +202,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 			PactRecord rbf2 = bf2.copyWithBlockingKey(record);
 			collector.collect(rbf2);
 		}
-		
-		
+
 	}
 
 	/**
@@ -210,19 +233,18 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 									r1.getField(3, PactString.class).getValue(),
 									r2.getField(3, PactString.class).getValue()) > 0.9) {
 						PactRecord outputRecord = new PactRecord();
-						outputRecord.setField(0,
-								r1.getField(0, PactInteger.class));
-						outputRecord.setField(1,
-								r2.getField(0, PactInteger.class));
-						outputRecord.setField(
-								2,
-								new PactDouble(dist.getSimilarity(
-										r1.getField(3, PactString.class)
-												.getValue(),
-										r2.getField(3, PactString.class)
-												.getValue())));
-						outputRecord.setField(3,
-								r1.getField(9, PactString.class));
+						if(r1.getField(0, PactInteger.class).getValue() < r2.getField(0, PactInteger.class).getValue()){
+							outputRecord.setField(0,
+									r1.getField(0, PactInteger.class));
+							outputRecord.setField(1,
+									r2.getField(0, PactInteger.class));
+						} else {
+							outputRecord.setField(1,
+									r1.getField(0, PactInteger.class));
+							outputRecord.setField(0,
+									r2.getField(0, PactInteger.class));
+						}
+						
 						out.collect(outputRecord);
 					}
 				}
@@ -304,6 +326,30 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 			if (record.getField(record.getNumFields() - 1, PactInteger.class)
 					.getValue() > THRESHOLD)
 				collector.collect(record);
+		}
+	}
+
+	/**
+	 * CoGrouper that combines CD's with tracks
+	 * 
+	 * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
+	 * 
+	 */
+	public static class CoGroupCDsWithTracks extends CoGroupStub {
+
+		@Override
+		public void coGroup(Iterator<PactRecord> inputRecords,
+				Iterator<PactRecord> concatRecords, Collector<PactRecord> out) {
+			while (inputRecords.hasNext()) {
+				PactRecord outputRecord = inputRecords.next().createCopy();
+				TrackList trackList = new TrackList();
+				while (concatRecords.hasNext()) {
+					trackList.add(concatRecords.next().createCopy());
+				}
+				outputRecord.addField(trackList);
+				out.collect(outputRecord);
+			}
+
 		}
 	}
 }
