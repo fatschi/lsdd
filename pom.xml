@@ -38,13 +38,12 @@
 	</dependencies>
 	<build>
 		<plugins>
-			<plugin>
+			<!--<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>2.2</version>
 				<executions>
 
-					<!-- CombineCDswithTracks -->
 					<execution>
 						<id>CombineCDswithTracks</id>
 						<phase>package</phase>
@@ -69,7 +68,7 @@
 						</configuration>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin>-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -92,6 +91,7 @@
 						<include>**/MultiBlocking$*.class</include>
 						<include>**/AsciiUtils.class</include>
 						<include>**/BlockingFunction.class</include>
+						<include>**/DiscsInputFormat.class</include>
 					</includes> -->
 					<descriptors>
 						<descriptor>assembly.xml</descriptor>

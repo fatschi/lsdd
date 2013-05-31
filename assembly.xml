@@ -12,7 +12,6 @@
 		<dependencySet>
 			<includes>
 				<include>uk.ac.shef.wit:simmetrics</include>
-				<include>eu.stratosphere:sopremo-common</include>
 			</includes>
 			<outputDirectory>/lib</outputDirectory>
 			<useProjectArtifact>false</useProjectArtifact>

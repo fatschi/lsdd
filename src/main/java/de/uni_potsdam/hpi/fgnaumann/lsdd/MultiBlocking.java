@@ -31,6 +31,7 @@ import eu.stratosphere.pact.common.stubs.MapStub;
 import eu.stratosphere.pact.common.stubs.ReduceStub;
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactInteger;
+import eu.stratosphere.pact.common.type.base.PactList;
 import eu.stratosphere.pact.common.type.base.PactString;
 import eu.stratosphere.pact.common.type.base.parser.DecimalTextIntParser;
 import eu.stratosphere.pact.common.type.base.parser.VarLengthStringParser;
@@ -43,6 +44,7 @@ import eu.stratosphere.pact.common.type.base.parser.VarLengthStringParser;
  * 
  */
 public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
+	private static final int TRACKS_FIELD = 9;
 	private static final int COUNT_FIELD = 11;
 	public static final int THRESHOLD = 250;
 	public static final int BLOCKING_KEY_FIELD = 10;
@@ -63,9 +65,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		// create DataSourceContract for discs input
 		// disc_id;freedbdiscid;"artist_name";"disc_title";"genre_title";"disc_released";disc_tracks;disc_seconds;"disc_language"
 		// 7;727827;"Tenacious D";"Tenacious D";"Humour";"2001";19;2843;"eng"
-		FileDataSource discs = new FileDataSource(RecordInputFormat.class,
+		FileDataSource discs = new FileDataSource(DiscsInputFormat.class,
 				inputFileDiscs, "Discs");
-		RecordInputFormat.configureRecordFormat(discs).recordDelimiter('\n')
+		DiscsInputFormat.configureRecordFormat(discs).recordDelimiter('\n')
 				.fieldDelimiter(';').field(DecimalTextIntParser.class, 0) // disc_id
 				.field(DecimalTextIntParser.class, 1) // freedbdiscid
 				.field(VarLengthStringParser.class, 2) // "artist_name"
@@ -97,7 +99,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 
 		// contracts
 		MapContract firstBlockingStepMapper = MapContract
-				.builder(FirstBlockingStep.class).input(discs)
+				.builder(FirstBlockingStep.class).input(coGrouper)
 				.name("first blocking step").build();
 
 		ReduceContract countStepReducer = new ReduceContract.Builder(
@@ -185,7 +187,6 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 						AsciiUtils.toLowerCase(blockingKey);
 						return blockingKey;
 					}
-
 				}
 				);
 				add(new BlockingFunction() {
@@ -202,7 +203,6 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 						AsciiUtils.toLowerCase(blockingKey);
 						return blockingKey;
 					}
-
 				}
 				);
 			}
@@ -353,11 +353,11 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				Iterator<PactRecord> concatRecords, Collector<PactRecord> out) {
 			while (inputRecords.hasNext()) {
 				PactRecord outputRecord = inputRecords.next().createCopy();
-				TrackList trackList = new TrackList();
+				PactList<PactRecord> trackList = new TrackList();
 				while (concatRecords.hasNext()) {
 					trackList.add(concatRecords.next().createCopy());
 				}
-				outputRecord.setField(9, trackList);
+				outputRecord.setField(TRACKS_FIELD, trackList);
 				out.collect(outputRecord);
 			}
 
