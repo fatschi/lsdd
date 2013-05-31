@@ -9,7 +9,7 @@ public abstract class BlockingFunction {
 	
 	public PactRecord copyWithBlockingKey(PactRecord record){
 		PactRecord nr = record.createCopy();
-		nr.addField(function(record));
+		nr.setField(MultiBlocking.BLOCKING_KEY_FIELD, function(record));
 		return nr;
 	}
 }
