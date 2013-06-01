@@ -48,6 +48,8 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	private static final int COUNT_FIELD = 11;
 	public static final int THRESHOLD = 250;
 	public static final int BLOCKING_KEY_FIELD = 10;
+	private static final int DUPLICATE_ID_1_FIELD = 0;
+	private static final int DUPLICATE_ID_2_FIELD = 1;
 
 	@Override
 	public Plan getPlan(final String... args) {
@@ -119,10 +121,14 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		ReduceContract matchStepReducerBalanced = new ReduceContract.Builder(
 				MatchStep.class, PactString.class, BLOCKING_KEY_FIELD)
 				.input(unbalancedBlockFilterMapper).name("match step").build();
+		
+		ReduceContract unionStep = new ReduceContract.Builder(
+				UnionStep.class, PactString.class, DUPLICATE_ID_1_FIELD).keyField(PactInteger.class, DUPLICATE_ID_2_FIELD)
+				.input(matchStepReducerBalanced).name("match step").build();
 
 		// file output
 		FileDataSink out = new FileDataSink(RecordOutputFormat.class, output,
-				matchStepReducerBalanced, "Output");
+				unionStep, "Output");
 		RecordOutputFormat.configureRecordFormat(out).recordDelimiter('\n')
 				.fieldDelimiter(' ').lenient(true).field(PactInteger.class, 0)
 				.field(PactInteger.class, 1);
@@ -247,14 +253,14 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 						PactRecord outputRecord = new PactRecord();
 						if (r1.getField(0, PactInteger.class).getValue() < r2
 								.getField(0, PactInteger.class).getValue()) {
-							outputRecord.setField(0,
+							outputRecord.setField(DUPLICATE_ID_1_FIELD,
 									r1.getField(0, PactInteger.class));
-							outputRecord.setField(1,
+							outputRecord.setField(DUPLICATE_ID_2_FIELD,
 									r2.getField(0, PactInteger.class));
 						} else {
-							outputRecord.setField(1,
+							outputRecord.setField(DUPLICATE_ID_2_FIELD,
 									r1.getField(0, PactInteger.class));
-							outputRecord.setField(0,
+							outputRecord.setField(DUPLICATE_ID_1_FIELD,
 									r2.getField(0, PactInteger.class));
 						}
 
@@ -361,6 +367,38 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				out.collect(outputRecord);
 			}
 
+		}
+	}
+	
+	/**
+	 * Reducer that unions the set of duplicate pairs by emiting only one pair for each reducer
+	 * 
+	 * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
+	 * 
+	 */
+	@Combinable
+	public static class UnionStep extends ReduceStub {
+		@Override
+		public void reduce(Iterator<PactRecord> records,
+				Collector<PactRecord> out) throws Exception {
+			if(records.hasNext()){
+				out.collect(records.next());
+			}
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * eu.stratosphere.pact.common.stubs.ReduceStub#combine(java.util.Iterator
+		 * , eu.stratosphere.pact.common.stubs.Collector)
+		 */
+		@Override
+		public void combine(Iterator<PactRecord> records,
+				Collector<PactRecord> out) throws Exception {
+			// the logic is the same as in the reduce function, so simply call
+			// the reduce method
+			this.reduce(records, out);
 		}
 	}
 }
