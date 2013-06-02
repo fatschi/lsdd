@@ -45,9 +45,10 @@ import eu.stratosphere.pact.common.type.base.parser.VarLengthStringParser;
  */
 public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	private static final int TRACKS_FIELD = 9;
-	private static final int COUNT_FIELD = 11;
+	private static final int COUNT_FIELD = 12;
 	public static final int THRESHOLD = 250;
 	public static final int BLOCKING_KEY_FIELD = 10;
+	public static final int BLOCKING_ID_FIELD = 11;
 	private static final int DUPLICATE_ID_1_FIELD = 0;
 	private static final int DUPLICATE_ID_2_FIELD = 1;
 
@@ -148,9 +149,10 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.field(PactInteger.class, 6) // disc_tracks
 				.field(PactInteger.class, 7).field(PactString.class, 8)// disc_seconds
 																		// //"disc_language"
-				.field(TrackList.class, 9) // "trackList"
-				.field(PactString.class, 10) // "blockingKey"
-				.field(PactInteger.class, 11); // blockSize
+				.field(TrackList.class, TRACKS_FIELD) // "trackList"
+				.field(PactString.class, BLOCKING_KEY_FIELD) // "blockingKey"
+				.field(PactString.class, BLOCKING_ID_FIELD) // "blockingKey"
+				.field(PactInteger.class, COUNT_FIELD); // blockSize
 
 		// assemble the PACT plan
 		Collection<GenericDataSink> sinks = new HashSet<GenericDataSink>();
@@ -182,6 +184,22 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 			{
 				add(new BlockingFunction() {
 					@Override
+					PactString getID(){
+						return new PactString("Genre2Year3");
+					}
+					
+					@Override
+					PactString explode(PactRecord record){
+						String genre = record.getField(4, PactString.class)
+								.getValue().replace("\"", "");
+						String year = record.getField(5, PactString.class)
+								.getValue().replace("\"", "");
+						PactString blockingKey = new PactString(genre + year);
+						AsciiUtils.toLowerCase(blockingKey);
+						return blockingKey;						
+					}
+					
+					@Override
 					PactString function(PactRecord record) {
 						String genre = record.getField(4, PactString.class)
 								.getValue().replace("\"", "");
@@ -196,6 +214,21 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				}
 				);
 				add(new BlockingFunction() {
+					@Override
+					PactString getID(){
+						return new PactString("Artist2Year3");
+					}
+					
+					@Override
+					PactString explode(PactRecord record){
+						String artist = record.getField(2, PactString.class)
+								.getValue().replace("\"", "");
+						String year = record.getField(5, PactString.class)
+								.getValue().replace("\"", "");
+						PactString blockingKey = new PactString(artist + year);
+						AsciiUtils.toLowerCase(blockingKey);
+						return blockingKey;						
+					}
 					@Override
 					PactString function(PactRecord record) {
 						String artist = record.getField(2, PactString.class)
