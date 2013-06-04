@@ -96,12 +96,13 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 
 		// create DataSourceContract for gold standard input
 		// disc_id1;disc_id2
-		// 12;13
+		// 13;3163
 		FileDataSource gold = new FileDataSource(RecordInputFormat.class,
-				inputFileTracks, "GoldStandard");
+				inputFileGold, "GoldStandard");
 		RecordInputFormat.configureRecordFormat(gold).recordDelimiter('\n')
-				.fieldDelimiter(';').field(DecimalTextIntParser.class, 0) // disc_id1
-				.field(DecimalTextIntParser.class, 1); // disc_id1
+				.fieldDelimiter(';')
+				.field(DecimalTextIntParser.class, DUPLICATE_ID_1_FIELD) // disc_id1
+				.field(DecimalTextIntParser.class, DUPLICATE_ID_2_FIELD); // disc_id1
 
 		CoGroupContract coGrouper = CoGroupContract
 				.builder(CoGroupCDsWithTracks.class, PactInteger.class, 0, 0)
@@ -158,17 +159,26 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.name("validator step")
 				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD,
 						DUPLICATE_ID_2_FIELD).build();
-		;
-		// file output balanced
-		FileDataSink out = new FileDataSink(RecordOutputFormat.class, output
-				+ "/balanced", unionStep, "Output");
-		RecordOutputFormat.configureRecordFormat(out).recordDelimiter('\n')
-				.fieldDelimiter(' ').lenient(true).field(PactInteger.class, 0)
-				.field(PactInteger.class, 1);
+
+		// file output result
+		FileDataSink outResult = new FileDataSink(RecordOutputFormat.class,
+				output + "/result", unionStep, "Output Result");
+		RecordOutputFormat.configureRecordFormat(outResult)
+				.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
+				.field(PactInteger.class, 0).field(PactInteger.class, 1);
+
+		// file output tp
+		FileDataSink outTruePositives = new FileDataSink(
+				RecordOutputFormat.class, output + "/tp", validatorStep,
+				"Output True Positives");
+		RecordOutputFormat.configureRecordFormat(outTruePositives)
+				.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
+				.field(PactInteger.class, 0).field(PactInteger.class, 1);
 
 		// assemble the PACT plan
 		Collection<GenericDataSink> sinks = new HashSet<GenericDataSink>();
-		sinks.add(out);
+		sinks.add(outResult);
+		sinks.add(outTruePositives);
 		Plan plan = new Plan(sinks, "MultiBlocking");
 		plan.setDefaultParallelism(noSubtasks);
 		return plan;
@@ -384,7 +394,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		@Override
 		public void match(PactRecord value1, PactRecord value2,
 				Collector<PactRecord> out) throws Exception {
-			out.collect(value1);
+			out.collect(value1.createCopy());
 		}
 
 	}
