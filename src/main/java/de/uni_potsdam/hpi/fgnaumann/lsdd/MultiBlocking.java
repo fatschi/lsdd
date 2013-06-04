@@ -17,6 +17,7 @@ import eu.stratosphere.pact.common.contract.FileDataSink;
 import eu.stratosphere.pact.common.contract.FileDataSource;
 import eu.stratosphere.pact.common.contract.GenericDataSink;
 import eu.stratosphere.pact.common.contract.MapContract;
+import eu.stratosphere.pact.common.contract.MatchContract;
 import eu.stratosphere.pact.common.contract.ReduceContract;
 import eu.stratosphere.pact.common.io.RecordInputFormat;
 import eu.stratosphere.pact.common.io.RecordOutputFormat;
@@ -26,6 +27,7 @@ import eu.stratosphere.pact.common.plan.PlanAssemblerDescription;
 import eu.stratosphere.pact.common.stubs.CoGroupStub;
 import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.stubs.MapStub;
+import eu.stratosphere.pact.common.stubs.MatchStub;
 import eu.stratosphere.pact.common.stubs.ReduceStub;
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactInteger;
@@ -62,6 +64,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		final String inputFileDiscs = (args.length > 1 ? args[1] : "");
 		final String inputFileTracks = (args.length > 2 ? args[2] : "");
 		final String output = (args.length > 3 ? args[3] : "");
+		final String inputFileGold = (args.length > 4 ? args[4] : "");
 
 		// create DataSourceContract for discs input
 		// disc_id;freedbdiscid;"artist_name";"disc_title";"genre_title";"disc_released";disc_tracks;disc_seconds;"disc_language"
@@ -90,6 +93,15 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.field(VarLengthStringParser.class, 2) // "track_title"
 				.field(VarLengthStringParser.class, 3) // "artist_name"
 				.field(DecimalTextIntParser.class, 4); // track_seconds
+
+		// create DataSourceContract for gold standard input
+		// disc_id1;disc_id2
+		// 12;13
+		FileDataSource gold = new FileDataSource(RecordInputFormat.class,
+				inputFileTracks, "GoldStandard");
+		RecordInputFormat.configureRecordFormat(gold).recordDelimiter('\n')
+				.fieldDelimiter(';').field(DecimalTextIntParser.class, 0) // disc_id1
+				.field(DecimalTextIntParser.class, 1); // disc_id1
 
 		CoGroupContract coGrouper = CoGroupContract
 				.builder(CoGroupCDsWithTracks.class, PactInteger.class, 0, 0)
@@ -132,19 +144,27 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.input(secondBlockingStep).name("match step unbalanced")
 				.build();
 
-		ReduceContract unionStep = new ReduceContract.Builder(
-				UnionStep.class, PactString.class, DUPLICATE_ID_1_FIELD)
+		ReduceContract unionStep = new ReduceContract.Builder(UnionStep.class,
+				PactString.class, DUPLICATE_ID_1_FIELD)
 				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD)
 				.input(matchStepReducerUnbalanced).name("match step").build();
 		unionStep.addInput(matchStepReducerBalanced);
 
+		MatchContract validatorStep = MatchContract
+				.builder(ValidatorStep.class, PactInteger.class,
+						DUPLICATE_ID_1_FIELD, DUPLICATE_ID_1_FIELD)
+				.input1(gold)
+				.input2(unionStep)
+				.name("validator step")
+				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD,
+						DUPLICATE_ID_2_FIELD).build();
+		;
 		// file output balanced
-		FileDataSink out = new FileDataSink(RecordOutputFormat.class,
-				output + "/balanced", unionStep, "Output");
-		RecordOutputFormat.configureRecordFormat(out)
-				.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
-				.field(PactInteger.class, 0).field(PactInteger.class, 1);
-
+		FileDataSink out = new FileDataSink(RecordOutputFormat.class, output
+				+ "/balanced", unionStep, "Output");
+		RecordOutputFormat.configureRecordFormat(out).recordDelimiter('\n')
+				.fieldDelimiter(' ').lenient(true).field(PactInteger.class, 0)
+				.field(PactInteger.class, 1);
 
 		// assemble the PACT plan
 		Collection<GenericDataSink> sinks = new HashSet<GenericDataSink>();
@@ -346,9 +366,26 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		public void reduce(Iterator<PactRecord> records,
 				Collector<PactRecord> out) throws Exception {
 			if (records.hasNext()) {
-				PactRecord record = records.next().createCopy(); 
+				PactRecord record = records.next().createCopy();
 				out.collect(record);
 			}
 		}
+	}
+
+	/**
+	 * Matcher that compares the result with the gold standard and only emits
+	 * tp's
+	 * 
+	 * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
+	 * 
+	 */
+	public static class ValidatorStep extends MatchStub {
+
+		@Override
+		public void match(PactRecord value1, PactRecord value2,
+				Collector<PactRecord> out) throws Exception {
+			out.collect(value1);
+		}
+
 	}
 }
