@@ -117,7 +117,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.name("first blocking step").build();
 
 		ReduceContract countStepReducer = new ReduceContract.Builder(
-				CountStep.class, PactString.class, BLOCKING_KEY_FIELD)
+				CountStep.class, PactString.class, BLOCKING_KEY_FIELD).keyField(PactString.class, BLOCKING_ID_FIELD)
 				.input(firstBlockingStepMapper).name("count records step")
 				.build();
 
@@ -131,17 +131,17 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.name("filter balanced blocks step").build();
 
 		ReduceContract matchStepReducerBalanced = new ReduceContract.Builder(
-				MatchStep.class, PactString.class, BLOCKING_KEY_FIELD)
+				MatchStep.class, PactString.class, BLOCKING_KEY_FIELD).keyField(PactString.class, BLOCKING_ID_FIELD)
 				.input(unbalancedBlockFilterMapper).name("match step balanced")
 				.build();
 
 		ReduceContract secondBlockingStep = new ReduceContract.Builder(
-				SecondBlockingStep.class, PactString.class, BLOCKING_KEY_FIELD)
+				SecondBlockingStep.class, PactString.class, BLOCKING_KEY_FIELD).keyField(PactString.class, BLOCKING_ID_FIELD)
 				.input(balancedBlockFilterMapper).name("second blocking step")
 				.build();
 
 		ReduceContract matchStepReducerUnbalanced = new ReduceContract.Builder(
-				MatchStep.class, PactString.class, BLOCKING_KEY_FIELD)
+				MatchStep.class, PactString.class, BLOCKING_KEY_FIELD).keyField(PactString.class, BLOCKING_ID_FIELD)
 				.input(secondBlockingStep).name("match step unbalanced")
 				.build();
 
