@@ -10,6 +10,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.MatchStep;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.SortedNeighbourhood;
+
 import eu.stratosphere.pact.common.contract.CoGroupContract;
 import eu.stratosphere.pact.common.contract.FileDataSink;
 import eu.stratosphere.pact.common.contract.FileDataSource;
@@ -47,9 +50,12 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static final int BLOCKING_KEY_FIELD = 10;
 	public static final int BLOCKING_ID_FIELD = 11;
 	public static final int COUNT_FIELD = 12;
-	public static final int THRESHOLD = 2;
 	public static final int DUPLICATE_ID_1_FIELD = 0;
 	public static final int DUPLICATE_ID_2_FIELD = 1;
+	
+	//parameters
+	public static final int WINDOW_SIZE = 10;
+	public static final int THRESHOLD = 1;
 
 	@Override
 	public Plan getPlan(final String... args) {
@@ -57,7 +63,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		/*
 		 * 4 file:///home/fabian/lsdd/data/mini.csv
 		 * file:///home/fabian/lsdd/data/freedb_tracks.csv
-		 * file:///home/fabian/lsdd/out
+		 * file:///home/fabian/lsdd/out file:///home/fabian/lsdd/data/gold.csv
 		 */
 		final int noSubtasks = (args.length > 0 ? Integer.parseInt(args[0]) : 1);
 		final String inputFileDiscs = (args.length > 1 ? args[1] : "");
@@ -134,20 +140,15 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.input(unbalancedBlockFilterMapper).name("match step balanced")
 				.build();
 
-		ReduceContract secondBlockingStep = new ReduceContract.Builder(
-				SecondBlockingStep.class, PactString.class, BLOCKING_KEY_FIELD).keyField(PactString.class, BLOCKING_ID_FIELD)
+		ReduceContract sortedNeighbourhoodStep = new ReduceContract.Builder(
+				SortedNeighbourhood.class, PactString.class, BLOCKING_KEY_FIELD).keyField(PactString.class, BLOCKING_ID_FIELD)
 				.input(balancedBlockFilterMapper).name("second blocking step")
-				.build();
-
-		ReduceContract matchStepReducerUnbalanced = new ReduceContract.Builder(
-				MatchStep.class, PactString.class, BLOCKING_KEY_FIELD).keyField(PactString.class, BLOCKING_ID_FIELD)
-				.input(secondBlockingStep).name("match step unbalanced")
 				.build();
 
 		ReduceContract unionStep = new ReduceContract.Builder(UnionStep.class,
 				PactString.class, DUPLICATE_ID_1_FIELD)
 				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD)
-				.input(matchStepReducerUnbalanced).name("match step").build();
+				.input(sortedNeighbourhoodStep).name("match step").build();
 		unionStep.addInput(matchStepReducerBalanced);
 
 		MatchContract validatorStep = MatchContract

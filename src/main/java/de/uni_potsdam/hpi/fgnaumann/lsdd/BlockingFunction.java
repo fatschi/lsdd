@@ -3,16 +3,20 @@ package de.uni_potsdam.hpi.fgnaumann.lsdd;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_potsdam.hpi.fgnaumann.lsdd.util.AsciiUtils;
+
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactString;
 
 public abstract class BlockingFunction {
 	
-	protected static final @SuppressWarnings({ "serial" })
+	static final @SuppressWarnings({ "serial" })
+	public
 	Set<BlockingFunction> blockingFuntions = new HashSet<BlockingFunction>() {
 		{
 			add(new BlockingFunction() {
 				@Override
+				public
 				PactString getID(){
 					return new PactString("Genre2Year3");
 				}
@@ -44,6 +48,7 @@ public abstract class BlockingFunction {
 			);
 			add(new BlockingFunction() {
 				@Override
+				public
 				PactString getID(){
 					return new PactString("Artist2Year3");
 				}
@@ -76,7 +81,7 @@ public abstract class BlockingFunction {
 		}
 	};
 	
-	abstract PactString getID();
+	public abstract PactString getID();
 	
 	abstract PactString explode(PactRecord record);
 	
