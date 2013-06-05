@@ -10,8 +10,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
-import uk.ac.shef.wit.simmetrics.similaritymetrics.AbstractStringMetric;
-import uk.ac.shef.wit.simmetrics.similaritymetrics.Levenshtein;
 import eu.stratosphere.pact.common.contract.CoGroupContract;
 import eu.stratosphere.pact.common.contract.FileDataSink;
 import eu.stratosphere.pact.common.contract.FileDataSource;
@@ -44,13 +42,14 @@ import eu.stratosphere.pact.common.type.base.parser.VarLengthStringParser;
  * 
  */
 public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
-	private static final int TRACKS_FIELD = 9;
+	//record field indizes
+	public static final int TRACKS_FIELD = 9;
 	public static final int BLOCKING_KEY_FIELD = 10;
 	public static final int BLOCKING_ID_FIELD = 11;
-	private static final int COUNT_FIELD = 12;
+	public static final int COUNT_FIELD = 12;
 	public static final int THRESHOLD = 2;
-	private static final int DUPLICATE_ID_1_FIELD = 0;
-	private static final int DUPLICATE_ID_2_FIELD = 1;
+	public static final int DUPLICATE_ID_1_FIELD = 0;
+	public static final int DUPLICATE_ID_2_FIELD = 1;
 
 	@Override
 	public Plan getPlan(final String... args) {
@@ -207,78 +206,6 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 			}
 		}
 
-	}
-
-	/**
-	 * Reducer that expands the blocking keys of the records in unbalanced
-	 * blocks
-	 * 
-	 * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
-	 * 
-	 */
-	public static class SecondBlockingStep extends ReduceStub {
-		@Override
-		public void reduce(Iterator<PactRecord> records,
-				Collector<PactRecord> out) throws Exception {
-			while (records.hasNext()) {
-				PactRecord recordToExpand = records.next();
-				PactString appliedBlockingFunctionId = recordToExpand.getField(
-						BLOCKING_ID_FIELD, PactString.class);
-				for (BlockingFunction bf : BlockingFunction.blockingFuntions) {
-					if (appliedBlockingFunctionId.equals(bf.getID())) {
-						out.collect(bf
-								.copyWithExplodedBlockingKey(recordToExpand));
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Reducer that does the matching step for each record in the block
-	 * 
-	 * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
-	 * @author richard.meissner@student.hpi.uni-potsdam.de
-	 * 
-	 */
-	public static class MatchStep extends ReduceStub {
-		@Override
-		public void reduce(Iterator<PactRecord> records,
-				Collector<PactRecord> out) throws Exception {
-			PactRecord record = new PactRecord();
-			List<PactRecord> r_temp = new ArrayList<PactRecord>();
-			while (records.hasNext()) {
-				record = records.next();
-				r_temp.add(record.createCopy());
-			}
-			for (int i = 0; i < r_temp.size(); i++) {
-				for (int j = i + 1; j < r_temp.size(); j++) {
-					PactRecord r1 = r_temp.get(i);
-					PactRecord r2 = r_temp.get(j);
-					AbstractStringMetric dist = new Levenshtein();
-					if (dist.getSimilarity(r1.getField(3, PactString.class)
-							.getValue(), r2.getField(3, PactString.class)
-							.getValue()) > 0.9) {
-						PactRecord outputRecord = new PactRecord();
-						if (r1.getField(0, PactInteger.class).getValue() < r2
-								.getField(0, PactInteger.class).getValue()) {
-							outputRecord.setField(DUPLICATE_ID_1_FIELD,
-									r1.getField(0, PactInteger.class));
-							outputRecord.setField(DUPLICATE_ID_2_FIELD,
-									r2.getField(0, PactInteger.class));
-						} else {
-							outputRecord.setField(DUPLICATE_ID_2_FIELD,
-									r1.getField(0, PactInteger.class));
-							outputRecord.setField(DUPLICATE_ID_1_FIELD,
-									r2.getField(0, PactInteger.class));
-						}
-
-						out.collect(outputRecord);
-					}
-				}
-			}
-		}
 	}
 
 	/**
