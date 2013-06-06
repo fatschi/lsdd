@@ -20,19 +20,15 @@ public class CountOutputStep extends ReduceStub {
 	@Override
 	public void reduce(Iterator<PactRecord> records, Collector<PactRecord> out)
 			throws Exception {
+		PactRecord record = records.next();
 		PactRecord outputRecord = new PactRecord();
-		outputRecord.setField(
-				0,
-				records.next().getField(MultiBlocking.COUNT_FIELD,
-						PactInteger.class));
-		outputRecord.setField(
-				1,
-				records.next().getField(MultiBlocking.BLOCKING_ID_FIELD,
-						PactString.class));
-		outputRecord.setField(
-				1,
-				records.next().getField(MultiBlocking.BLOCKING_KEY_FIELD,
-						PactString.class));
+		outputRecord.setField(0,
+				record.getField(MultiBlocking.COUNT_FIELD, PactInteger.class));
+
+		outputRecord.setField(1, record.getField(
+				MultiBlocking.BLOCKING_ID_FIELD, PactString.class));
+		outputRecord.setField(2, record.getField(
+				MultiBlocking.BLOCKING_KEY_FIELD, PactString.class));
 		out.collect(outputRecord);
 	}
 }

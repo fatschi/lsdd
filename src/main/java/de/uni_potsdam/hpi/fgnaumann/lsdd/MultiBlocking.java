@@ -4,15 +4,18 @@
 
 package de.uni_potsdam.hpi.fgnaumann.lsdd;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 
+import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.BalancedBlockFilterStep;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CoGroupCDsWithTracks;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CountOutputStep;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CountStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.MatchStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.SortedNeighbourhood;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.UnbalancedBlockFilterStep;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.UnionStep;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.ValidatorStep;
 import eu.stratosphere.pact.common.contract.CoGroupContract;
 import eu.stratosphere.pact.common.contract.FileDataSink;
 import eu.stratosphere.pact.common.contract.FileDataSource;
@@ -25,14 +28,10 @@ import eu.stratosphere.pact.common.io.RecordOutputFormat;
 import eu.stratosphere.pact.common.plan.Plan;
 import eu.stratosphere.pact.common.plan.PlanAssembler;
 import eu.stratosphere.pact.common.plan.PlanAssemblerDescription;
-import eu.stratosphere.pact.common.stubs.CoGroupStub;
 import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.stubs.MapStub;
-import eu.stratosphere.pact.common.stubs.MatchStub;
-import eu.stratosphere.pact.common.stubs.ReduceStub;
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactInteger;
-import eu.stratosphere.pact.common.type.base.PactList;
 import eu.stratosphere.pact.common.type.base.PactString;
 import eu.stratosphere.pact.common.type.base.parser.DecimalTextIntParser;
 import eu.stratosphere.pact.common.type.base.parser.VarLengthStringParser;
@@ -55,7 +54,8 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 
 	// parameters
 	public static final int WINDOW_SIZE = 10;
-	public static final int THRESHOLD = 25;
+	public static final int THRESHOLD = 141;
+	public boolean takeTracksIntoAccount = false;
 
 	@Override
 	public Plan getPlan(final String... args) {
@@ -87,17 +87,21 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.field(DecimalTextIntParser.class, 7) // disc_seconds
 				.field(VarLengthStringParser.class, 8); // "disc_language"
 
-		// create DataSourceContract for tracks input
-		// disc_id;track_number;"track_title";"artist_name";track_seconds
-		// 2;1;"Intro+Chor Der Kriminalbeamten";"Kottans Kapelle";115
-		FileDataSource tracks = new FileDataSource(RecordInputFormat.class,
-				inputFileTracks, "Tracks");
-		RecordInputFormat.configureRecordFormat(tracks).recordDelimiter('\n')
-				.fieldDelimiter(';').field(DecimalTextIntParser.class, 0) // disc_id
-				.field(DecimalTextIntParser.class, 1) // freedbdiscid
-				.field(VarLengthStringParser.class, 2) // "track_title"
-				.field(VarLengthStringParser.class, 3) // "artist_name"
-				.field(DecimalTextIntParser.class, 4); // track_seconds
+		FileDataSource tracks = null;
+		if (takeTracksIntoAccount) {
+			// create DataSourceContract for tracks input
+			// disc_id;track_number;"track_title";"artist_name";track_seconds
+			// 2;1;"Intro+Chor Der Kriminalbeamten";"Kottans Kapelle";115
+			tracks = new FileDataSource(RecordInputFormat.class,
+					inputFileTracks, "Tracks");
+			RecordInputFormat.configureRecordFormat(tracks)
+					.recordDelimiter('\n').fieldDelimiter(';')
+					.field(DecimalTextIntParser.class, 0) // disc_id
+					.field(DecimalTextIntParser.class, 1) // freedbdiscid
+					.field(VarLengthStringParser.class, 2) // "track_title"
+					.field(VarLengthStringParser.class, 3) // "artist_name"
+					.field(DecimalTextIntParser.class, 4); // track_seconds
+		}
 
 		// create DataSourceContract for gold standard input
 		// disc_id1;disc_id2
@@ -109,17 +113,27 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.field(DecimalTextIntParser.class, DUPLICATE_ID_1_FIELD) // disc_id1
 				.field(DecimalTextIntParser.class, DUPLICATE_ID_2_FIELD); // disc_id1
 
-		CoGroupContract coGrouper = CoGroupContract
-				.builder(CoGroupCDsWithTracks.class, PactInteger.class, 0, 0)
-				.name("Group CDs with Tracks").build();
+		CoGroupContract coGrouper = null;
+		if (takeTracksIntoAccount) {
+			coGrouper = CoGroupContract
+					.builder(CoGroupCDsWithTracks.class, PactInteger.class, 0,
+							0).name("Group CDs with Tracks").build();
 
-		coGrouper.setFirstInput(discs);
-		coGrouper.setSecondInput(tracks);
+			coGrouper.setFirstInput(discs);
+			coGrouper.setSecondInput(tracks);
+		}
 
 		// contracts
-		MapContract firstBlockingStep = MapContract
-				.builder(FirstBlockingStep.class).input(coGrouper)
-				.name("first blocking step").build();
+		MapContract firstBlockingStep = null;
+		if (takeTracksIntoAccount) {
+			firstBlockingStep = MapContract.builder(FirstBlockingStep.class)
+					.input(coGrouper)
+					.name("first blocking step with track list").build();
+		} else {
+			firstBlockingStep = MapContract.builder(FirstBlockingStep.class)
+					.input(discs)
+					.name("first blocking step without track list").build();
+		}
 
 		ReduceContract countStep = new ReduceContract.Builder(CountStep.class,
 				PactString.class, BLOCKING_KEY_FIELD)
@@ -149,7 +163,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		ReduceContract unionStep = new ReduceContract.Builder(UnionStep.class,
 				PactString.class, DUPLICATE_ID_1_FIELD)
 				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD)
-				.input(sortedNeighbourhoodStep).name("match step").build();
+				.input(sortedNeighbourhoodStep).name("union step").build();
 		unionStep.addInput(matchStepReducerBalanced);
 
 		MatchContract validatorStep = MatchContract
@@ -161,9 +175,11 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD,
 						DUPLICATE_ID_2_FIELD).build();
 
-		// debugging stubs
+		// debugging contracts
 		ReduceContract countOutputStep = new ReduceContract.Builder(
 				CountOutputStep.class, PactInteger.class, COUNT_FIELD)
+				.keyField(PactString.class, BLOCKING_ID_FIELD)
+				.keyField(PactString.class, BLOCKING_KEY_FIELD)
 				.input(countStep).name("count output step").build();
 		unionStep.addInput(matchStepReducerBalanced);
 
@@ -185,11 +201,13 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		// debug outputs
 		// count output steps
 		FileDataSink countOutput = new FileDataSink(RecordOutputFormat.class,
-				output + "/block_size", countOutputStep, "Output Block Sizes");
+				output + "/block_size.csv", countOutputStep,
+				"Output Block Sizes");
 		RecordOutputFormat.configureRecordFormat(countOutput)
-				.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
+				.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
 				.field(PactInteger.class, 0).field(PactString.class, 1)
-				.field(PactString.class, 1);
+				.field(PactString.class, 2);
+		countOutput.setDegreeOfParallelism(1);
 
 		// assemble the PACT plan
 		Collection<GenericDataSink> sinks = new HashSet<GenericDataSink>();
@@ -223,124 +241,6 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 			for (BlockingFunction bf : BlockingFunction.blockingFuntions) {
 				collector.collect(bf.copyWithBlockingKey(record));
 			}
-		}
-
-	}
-
-	/**
-	 * Reducer that counts the entries of each block to identify unbalanced
-	 * blocks
-	 * 
-	 * @author richard.meissner@student.hpi.uni-potsdam.de
-	 * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
-	 * 
-	 */
-	public static class CountStep extends ReduceStub {
-		@Override
-		public void reduce(Iterator<PactRecord> records,
-				Collector<PactRecord> out) throws Exception {
-			PactRecord outputRecord;
-			List<PactRecord> r_temp = new ArrayList<PactRecord>();
-			int sum = 0;
-			while (records.hasNext()) {
-				outputRecord = records.next();
-				r_temp.add(outputRecord.createCopy());
-				sum++;
-			}
-			PactInteger cnt = new PactInteger();
-			cnt.setValue(sum);
-			for (PactRecord r : r_temp) {
-				r.setField(COUNT_FIELD, cnt);
-				out.collect(r);
-			}
-		}
-	}
-
-	/**
-	 * Mapper that emits only balanced blocks
-	 * 
-	 * @author richard.meissner@student.hpi.uni-potsdam.de
-	 * 
-	 */
-	public static class UnbalancedBlockFilterStep extends MapStub {
-
-		@Override
-		public void map(PactRecord record, Collector<PactRecord> collector) {
-			if (record.getField(COUNT_FIELD, PactInteger.class).getValue() <= THRESHOLD)
-				collector.collect(record);
-		}
-	}
-
-	/**
-	 * Mapper that emits only unbalanced blocks
-	 * 
-	 * @author richard.meissner@student.hpi.uni-potsdam.de
-	 * 
-	 */
-	public static class BalancedBlockFilterStep extends MapStub {
-
-		@Override
-		public void map(PactRecord record, Collector<PactRecord> collector) {
-			if (record.getField(COUNT_FIELD, PactInteger.class).getValue() > THRESHOLD)
-				collector.collect(record);
-		}
-	}
-
-	/**
-	 * CoGrouper that combines CD's with tracks
-	 * 
-	 * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
-	 * 
-	 */
-	public static class CoGroupCDsWithTracks extends CoGroupStub {
-
-		@Override
-		public void coGroup(Iterator<PactRecord> inputRecords,
-				Iterator<PactRecord> concatRecords, Collector<PactRecord> out) {
-			while (inputRecords.hasNext()) {
-				PactRecord outputRecord = inputRecords.next().createCopy();
-				PactList<PactRecord> trackList = new TrackList();
-				while (concatRecords.hasNext()) {
-					trackList.add(concatRecords.next().createCopy());
-				}
-				outputRecord.setField(TRACKS_FIELD, trackList);
-				out.collect(outputRecord);
-			}
-
-		}
-	}
-
-	/**
-	 * Reducer that unions the set of duplicate pairs by emiting only one pair
-	 * for each reducer
-	 * 
-	 * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
-	 * 
-	 */
-	public static class UnionStep extends ReduceStub {
-		@Override
-		public void reduce(Iterator<PactRecord> records,
-				Collector<PactRecord> out) throws Exception {
-			if (records.hasNext()) {
-				PactRecord record = records.next().createCopy();
-				out.collect(record);
-			}
-		}
-	}
-
-	/**
-	 * Matcher that compares the result with the gold standard and only emits
-	 * tp's
-	 * 
-	 * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
-	 * 
-	 */
-	public static class ValidatorStep extends MatchStub {
-
-		@Override
-		public void match(PactRecord value1, PactRecord value2,
-				Collector<PactRecord> out) throws Exception {
-			out.collect(value1.createCopy());
 		}
 
 	}
