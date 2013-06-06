@@ -44,7 +44,7 @@ import eu.stratosphere.pact.common.type.base.PactString;
 			Collections.sort(records_list, new BlockingKeyComparator());
 			
 			for (int i = 0; i < records_list.size(); i++) {
-				for (int j = i + 1; j < i+MultiBlocking.WINDOW_SIZE|| j < records_list.size(); j++) {
+				for (int j = i + 1; j < j+MultiBlocking.WINDOW_SIZE && j < records_list.size(); j++) {
 					PactRecord r1 = records_list.get(i);
 					PactRecord r2 = records_list.get(j);
 					

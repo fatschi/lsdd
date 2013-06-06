@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking;
-
 import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.stubs.ReduceStub;
 import eu.stratosphere.pact.common.type.PactRecord;

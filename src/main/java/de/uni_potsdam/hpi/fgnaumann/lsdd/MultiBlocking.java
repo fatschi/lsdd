@@ -10,9 +10,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CountOutputStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.MatchStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.SortedNeighbourhood;
-
 import eu.stratosphere.pact.common.contract.CoGroupContract;
 import eu.stratosphere.pact.common.contract.FileDataSink;
 import eu.stratosphere.pact.common.contract.FileDataSource;
@@ -45,17 +45,17 @@ import eu.stratosphere.pact.common.type.base.parser.VarLengthStringParser;
  * 
  */
 public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
-	//record field indizes
+	// record field indizes
 	public static final int TRACKS_FIELD = 9;
 	public static final int BLOCKING_KEY_FIELD = 10;
 	public static final int BLOCKING_ID_FIELD = 11;
 	public static final int COUNT_FIELD = 12;
 	public static final int DUPLICATE_ID_1_FIELD = 0;
 	public static final int DUPLICATE_ID_2_FIELD = 1;
-	
-	//parameters
+
+	// parameters
 	public static final int WINDOW_SIZE = 10;
-	public static final int THRESHOLD = 1;
+	public static final int THRESHOLD = 25;
 
 	@Override
 	public Plan getPlan(final String... args) {
@@ -117,32 +117,33 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		coGrouper.setSecondInput(tracks);
 
 		// contracts
-		MapContract firstBlockingStepMapper = MapContract
+		MapContract firstBlockingStep = MapContract
 				.builder(FirstBlockingStep.class).input(coGrouper)
 				.name("first blocking step").build();
 
-		ReduceContract countStepReducer = new ReduceContract.Builder(
-				CountStep.class, PactString.class, BLOCKING_KEY_FIELD).keyField(PactString.class, BLOCKING_ID_FIELD)
-				.input(firstBlockingStepMapper).name("count records step")
-				.build();
+		ReduceContract countStep = new ReduceContract.Builder(CountStep.class,
+				PactString.class, BLOCKING_KEY_FIELD)
+				.keyField(PactString.class, BLOCKING_ID_FIELD)
+				.input(firstBlockingStep).name("count records step").build();
 
-		MapContract unbalancedBlockFilterMapper = MapContract
-				.builder(UnbalancedBlockFilterStep.class)
-				.input(countStepReducer).name("filter unbalanced blocks step")
-				.build();
+		MapContract unbalancedBlockFilter = MapContract
+				.builder(UnbalancedBlockFilterStep.class).input(countStep)
+				.name("filter unbalanced blocks step").build();
 
-		MapContract balancedBlockFilterMapper = MapContract
-				.builder(BalancedBlockFilterStep.class).input(countStepReducer)
+		MapContract balancedBlockFilter = MapContract
+				.builder(BalancedBlockFilterStep.class).input(countStep)
 				.name("filter balanced blocks step").build();
 
 		ReduceContract matchStepReducerBalanced = new ReduceContract.Builder(
-				MatchStep.class, PactString.class, BLOCKING_KEY_FIELD).keyField(PactString.class, BLOCKING_ID_FIELD)
-				.input(unbalancedBlockFilterMapper).name("match step balanced")
+				MatchStep.class, PactString.class, BLOCKING_KEY_FIELD)
+				.keyField(PactString.class, BLOCKING_ID_FIELD)
+				.input(unbalancedBlockFilter).name("match step balanced")
 				.build();
 
 		ReduceContract sortedNeighbourhoodStep = new ReduceContract.Builder(
-				SortedNeighbourhood.class, PactString.class, BLOCKING_KEY_FIELD).keyField(PactString.class, BLOCKING_ID_FIELD)
-				.input(balancedBlockFilterMapper).name("second blocking step")
+				SortedNeighbourhood.class, PactString.class, BLOCKING_KEY_FIELD)
+				.keyField(PactString.class, BLOCKING_ID_FIELD)
+				.input(balancedBlockFilter).name("second blocking step")
 				.build();
 
 		ReduceContract unionStep = new ReduceContract.Builder(UnionStep.class,
@@ -160,6 +161,12 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD,
 						DUPLICATE_ID_2_FIELD).build();
 
+		// debugging stubs
+		ReduceContract countOutputStep = new ReduceContract.Builder(
+				CountOutputStep.class, PactInteger.class, COUNT_FIELD)
+				.input(countStep).name("count output step").build();
+		unionStep.addInput(matchStepReducerBalanced);
+
 		// file output result
 		FileDataSink outResult = new FileDataSink(RecordOutputFormat.class,
 				output + "/result", unionStep, "Output Result");
@@ -175,12 +182,23 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
 				.field(PactInteger.class, 0).field(PactInteger.class, 1);
 
+		// debug outputs
+		// count output steps
+		FileDataSink countOutput = new FileDataSink(RecordOutputFormat.class,
+				output + "/block_size", countOutputStep, "Output Block Sizes");
+		RecordOutputFormat.configureRecordFormat(countOutput)
+				.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
+				.field(PactInteger.class, 0).field(PactString.class, 1)
+				.field(PactString.class, 1);
+
 		// assemble the PACT plan
 		Collection<GenericDataSink> sinks = new HashSet<GenericDataSink>();
 		sinks.add(outResult);
 		sinks.add(outTruePositives);
+		sinks.add(countOutput);
 		Plan plan = new Plan(sinks, "MultiBlocking");
 		plan.setDefaultParallelism(noSubtasks);
+
 		return plan;
 	}
 
