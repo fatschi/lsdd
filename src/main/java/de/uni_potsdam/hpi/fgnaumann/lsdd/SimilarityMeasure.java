@@ -4,16 +4,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_potsdam.hpi.fgnaumann.lsdd.similarity.ArtistNameSimilarity;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.similarity.DiscTitleSimilarity;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.similarity.NegativeRule;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.similarity.PositiveRule;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.similarity.TrackNumberDifference;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.similarity.XOrKeywords;
 import eu.stratosphere.pact.common.type.PactRecord;
 
-public class SimilarityMeasure {
-	public static final int ARTIST_NAME_FIELD = 2;
-	public static final int DISC_TITLE_FIELD = 3;
-	public static final int DISC_TRACKS_FIELD = 6;
+public class SimilarityMeasure {;
 	
 	private static final float SIMILARITY_THRESHOLD = 0.95f;
 	static Set<NegativeRule> negativeRules = new HashSet<NegativeRule>();
@@ -23,6 +21,7 @@ public class SimilarityMeasure {
 		negativeRules.add(TrackNumberDifference.getInstance());
 		negativeRules.add(XOrKeywords.getInstance());
 		positiveRules.add(ArtistNameSimilarity.getInstance());
+		positiveRules.add(DiscTitleSimilarity.getInstance());
 	}
 
 	public static boolean isDuplicate(PactRecord record1, PactRecord record2) {
