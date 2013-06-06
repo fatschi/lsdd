@@ -11,6 +11,7 @@ import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.BalancedBlockFilterStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CoGroupCDsWithTracks;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CountOutputStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CountStep;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.FirstBlockingStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.MatchStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.SortedNeighbourhood;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.UnbalancedBlockFilterStep;
@@ -226,22 +227,5 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	@Override
 	public String getDescription() {
 		return "Parameters: [noSubStasks], [discs], [tracks], [output]";
-	}
-
-	/**
-	 * Mapper that applies the blocking functions to each record
-	 * 
-	 * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
-	 * 
-	 */
-	public static class FirstBlockingStep extends MapStub {
-
-		@Override
-		public void map(PactRecord record, Collector<PactRecord> collector) {
-			for (BlockingFunction bf : BlockingFunction.blockingFuntions) {
-				collector.collect(bf.copyWithBlockingKey(record));
-			}
-		}
-
 	}
 }
