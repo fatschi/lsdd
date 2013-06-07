@@ -42,9 +42,10 @@ import eu.stratosphere.pact.common.type.base.PactString;
 			}
 			
 			Collections.sort(records_list, new BlockingKeyComparator());
-			
+			int blockSize = records_list.get(0).getField(MultiBlocking.COUNT_FIELD, PactInteger.class).getValue();
+			int windowSize = MultiBlocking.MAXIMUM_COMPARISON/blockSize;
 			for (int i = 0; i < records_list.size(); i++) {
-				for (int j = i + 1; j < j+MultiBlocking.WINDOW_SIZE && j < records_list.size(); j++) {
+				for (int j = i + 1; j < j+windowSize && j < records_list.size(); j++) {
 					PactRecord r1 = records_list.get(i);
 					PactRecord r2 = records_list.get(j);
 					
