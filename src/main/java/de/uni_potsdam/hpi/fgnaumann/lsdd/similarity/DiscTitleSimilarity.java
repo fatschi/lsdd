@@ -6,16 +6,16 @@ import de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking;
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactString;
 
-public class ArtistNameSimilarity implements PositiveRule {
-	private static ArtistNameSimilarity instance = null;
+public class DiscTitleSimilarity implements PositiveRule {
+	private static DiscTitleSimilarity instance = null;
 	private static AbstractStringMetric dist = new Levenshtein();
 
-	private ArtistNameSimilarity() {
+	private DiscTitleSimilarity() {
 	}
 
-	public static ArtistNameSimilarity getInstance() {
+	public static DiscTitleSimilarity getInstance() {
 		if (instance == null) {
-			instance = new ArtistNameSimilarity();
+			instance = new DiscTitleSimilarity();
 		}
 		return instance;
 	}
@@ -23,14 +23,14 @@ public class ArtistNameSimilarity implements PositiveRule {
 	@Override
 	public float similarity(PactRecord record1, PactRecord record2) {
 		return dist.getSimilarity(
-				record1.getField(MultiBlocking.ARTIST_NAME_FIELD,
+				record1.getField(MultiBlocking.DISC_TITLE_FIELD,
 						PactString.class).getValue(),
-				record2.getField(MultiBlocking.ARTIST_NAME_FIELD,
+				record2.getField(MultiBlocking.DISC_TITLE_FIELD,
 						PactString.class).getValue());
 	}
 
 	@Override
 	public int getWeight() {
-		return 5;
+		return 8;
 	}
 }

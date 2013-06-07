@@ -43,6 +43,15 @@ import eu.stratosphere.pact.common.type.base.parser.VarLengthStringParser;
  */
 public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	// record field indizes
+	public static final int DISC_ID_FIELD = 0;
+	public static final int DISC_FREEDB_ID_FIELD = 1;
+	public static final int ARTIST_NAME_FIELD = 2;
+	public static final int DISC_TITLE_FIELD = 3;
+	public static final int GENRE_TITLE_FIELD = 4;
+	public static final int DISC_RELEASED_FIELD = 5;
+	public static final int DISC_TRACKS_FIELD = 6;
+	public static final int DISC_SECONDS_FIELD = 7;
+	public static final int DISC_LANGUAGE_FIELD = 8;
 	public static final int TRACKS_FIELD = 9;
 	public static final int BLOCKING_KEY_FIELD = 10;
 	public static final int BLOCKING_ID_FIELD = 11;
