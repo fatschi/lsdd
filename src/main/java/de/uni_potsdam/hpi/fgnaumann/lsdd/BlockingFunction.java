@@ -24,9 +24,9 @@ public abstract class BlockingFunction {
 				@Override
 				PactString explode(PactRecord record){
 					String genre = record.getField(4, PactString.class)
-							.getValue().replace("\"", "");
+							.getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
 					String year = record.getField(5, PactString.class)
-							.getValue().replace("\"", "");
+							.getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
 					PactString blockingKey = new PactString(genre + year);
 					AsciiUtils.toLowerCase(blockingKey);
 					return blockingKey;						
@@ -35,10 +35,10 @@ public abstract class BlockingFunction {
 				@Override
 				PactString function(PactRecord record) {
 					String genre = record.getField(4, PactString.class)
-							.getValue().replace("\"", "");
+							.getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
 					genre = genre.length() > 2 ? genre.substring(0, 2) : "";
 					String year = record.getField(5, PactString.class)
-							.getValue().replace("\"", "");
+							.getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
 					year = year.length() >= 4 ? year.substring(0, 3) : "";
 					PactString blockingKey = new PactString(genre + year);
 					AsciiUtils.toLowerCase(blockingKey);
@@ -56,9 +56,9 @@ public abstract class BlockingFunction {
 				@Override
 				PactString explode(PactRecord record){
 					String artist = record.getField(2, PactString.class)
-							.getValue().replace("\"", "");
+							.getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
 					String year = record.getField(5, PactString.class)
-							.getValue().replace("\"", "");
+							.getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
 					PactString blockingKey = new PactString(artist + year);
 					AsciiUtils.toLowerCase(blockingKey);
 					return blockingKey;						
@@ -66,11 +66,11 @@ public abstract class BlockingFunction {
 				@Override
 				PactString function(PactRecord record) {
 					String artist = record.getField(2, PactString.class)
-							.getValue().replace("\"", "");
+							.getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
 					artist = artist.length() > 2 ? artist.substring(0, 2)
 							: "";
 					String year = record.getField(5, PactString.class)
-							.getValue().replace("\"", "");
+							.getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
 					year = year.length() >= 4 ? year.substring(0, 3) : "";
 					PactString blockingKey = new PactString(artist + year);
 					AsciiUtils.toLowerCase(blockingKey);
