@@ -6,7 +6,7 @@ import eu.stratosphere.pact.common.type.base.PactString;
 
 public class ReleaseYearDifference implements NegativeRule{
     private static ReleaseYearDifference instance = null;
-    private static int MAX_YEAR_DIFF = 25; 
+    private static int MAX_YEAR_DIFF = 5; 
  
     private ReleaseYearDifference() {}
  
