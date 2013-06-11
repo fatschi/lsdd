@@ -55,12 +55,13 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static final int TRACKS_FIELD = 9;
 	public static final int BLOCKING_KEY_FIELD = 10;
 	public static final int BLOCKING_ID_FIELD = 11;
-	public static final int COUNT_FIELD = 12;
+	public static final int BLOCKING_KEY_EXTENDED_FIELD = 12;
+	public static final int COUNT_FIELD = 13;
 	public static final int DUPLICATE_ID_1_FIELD = 0;
 	public static final int DUPLICATE_ID_2_FIELD = 1;
 
 	//stats
-	private static final int MAX_BLOCK_SIZE = 138767;
+	private static final int MAX_BLOCK_SIZE = 5;
 	// parameters
 	public static final int MAX_WINDOW_FOR_LARGE_BLOCKS = 3;
 	public static final int MAX_WINDOW_SIZE = 3;
@@ -169,6 +170,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		ReduceContract sortedNeighbourhoodStep = new ReduceContract.Builder(
 				SortedNeighbourhood.class, PactString.class, BLOCKING_KEY_FIELD)
 				.keyField(PactString.class, BLOCKING_ID_FIELD)
+				.secondaryOrder(new Ordering(BLOCKING_KEY_EXTENDED_FIELD, PactString.class, Order.ASCENDING))
 				.input(balancedBlockFilter).name("second blocking step")
 				.build();
 

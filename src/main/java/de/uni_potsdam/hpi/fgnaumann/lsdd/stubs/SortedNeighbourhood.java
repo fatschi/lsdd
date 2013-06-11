@@ -5,16 +5,13 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import de.uni_potsdam.hpi.fgnaumann.lsdd.BlockingFunction;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.BlockingKeyComparator;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.similarity.SimilarityMeasure;
-
 import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.stubs.ReduceStub;
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactInteger;
-import eu.stratosphere.pact.common.type.base.PactString;
 
 /**
 	 * Reducer that expands the blocking keys of the records in unbalanced
@@ -28,17 +25,10 @@ import eu.stratosphere.pact.common.type.base.PactString;
 		public void reduce(Iterator<PactRecord> records,
 				Collector<PactRecord> out) throws Exception {
 			List<PactRecord> records_list = new ArrayList<PactRecord>();
+			//TODO use priority queue/stack
 			while (records.hasNext()) {
 				PactRecord recordToExpand = records.next();
-				PactString appliedBlockingFunctionId = recordToExpand.getField(
-						MultiBlocking.BLOCKING_ID_FIELD, PactString.class);
-				for (BlockingFunction bf : BlockingFunction.blockingFuntions) {
-					if (appliedBlockingFunctionId.equals(bf.getID())) {
-						records_list.add(bf
-								.copyWithExplodedBlockingKey(recordToExpand));
-						break;
-					}
-				}
+				records_list.add(recordToExpand);
 			}
 			
 			Collections.sort(records_list, new BlockingKeyComparator());
