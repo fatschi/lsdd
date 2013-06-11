@@ -8,7 +8,7 @@ import java.util.List;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.BlockingFunction;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.BlockingKeyComparator;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking;
-import de.uni_potsdam.hpi.fgnaumann.lsdd.SimilarityMeasure;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.similarity.SimilarityMeasure;
 
 import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.stubs.ReduceStub;
@@ -43,7 +43,7 @@ import eu.stratosphere.pact.common.type.base.PactString;
 			
 			Collections.sort(records_list, new BlockingKeyComparator());
 			int blockSize = records_list.get(0).getField(MultiBlocking.COUNT_FIELD, PactInteger.class).getValue();
-			int windowSize = MultiBlocking.MAXIMUM_COMPARISON/blockSize;
+			int windowSize = MultiBlocking.MAX_WINDOW_SIZE < MultiBlocking.MAXIMUM_COMPARISON/blockSize ? MultiBlocking.MAX_WINDOW_SIZE : MultiBlocking.MAXIMUM_COMPARISON/blockSize;
 			for (int i = 0; i < records_list.size(); i++) {
 				for (int j = i + 1; j < j+windowSize && j < records_list.size(); j++) {
 					PactRecord r1 = records_list.get(i);

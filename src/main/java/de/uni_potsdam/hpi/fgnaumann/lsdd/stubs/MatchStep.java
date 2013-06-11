@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking;
-import de.uni_potsdam.hpi.fgnaumann.lsdd.SimilarityMeasure;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.similarity.SimilarityMeasure;
 
 import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.stubs.ReduceStub;
