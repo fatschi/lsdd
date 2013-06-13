@@ -62,36 +62,48 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static final int DUPLICATE_ID_1_FIELD = 0;
 	public static final int DUPLICATE_ID_2_FIELD = 1;
 
-	//stats
-	private static final int MAX_BLOCK_SIZE = 5;
+	// stats
+	private static int MAX_BLOCK_SIZE;
 	// parameters
-	public static final int MAX_WINDOW_FOR_LARGE_BLOCKS = 3;
-	public static final int MAX_WINDOW_SIZE = 3;
-	public static final int MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS*MAX_BLOCK_SIZE;
-	public static final long THRESHOLD = Math.round(Math.sqrt(MAXIMUM_COMPARISON));
-	public static final float SIMILARITY_THRESHOLD = 0.95f;
-	public boolean takeTracksIntoAccount = false;
+	public static int MAX_WINDOW_FOR_LARGE_BLOCKS;
+	public static int MAX_WINDOW_SIZE;
+	public static float SIMILARITY_THRESHOLD;
+	public boolean takeTracksIntoAccount;
+	
+	//heuristics
+	public static int MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS
+			* MAX_BLOCK_SIZE;
+	public static long THRESHOLD = Math.round(Math.sqrt(MAXIMUM_COMPARISON));
 
 	@Override
 	public Plan getPlan(final String... args) {
-		// parse program parameters
-		/*
-		 * 4 file:///home/fabian/lsdd/data/mini.csv
-		 * file:///home/fabian/lsdd/data/freedb_tracks.csv
-		 * file:///home/fabian/lsdd/out file:///home/fabian/lsdd/data/gold.csv
-		 */
-		final int noSubtasks = (args.length > 0 ? Integer.parseInt(args[0]) : 1);
-		final String inputFileDiscs = (args.length > 1 ? args[1] : "");
-		final String inputFileTracks = (args.length > 2 ? args[2] : "");
-		final String output = (args.length > 3 ? args[3] : "");
-		final String inputFileGold = (args.length > 4 ? args[4] : "");
+		final int noSubtasks;
+		final String inputFileDiscs;
+		final String inputFileTracks;
+		final String output;
+		final String inputFileGold;
+		if (args.length >= 9) {
+			noSubtasks = Integer.parseInt(args[0]);
+			inputFileDiscs = args[1];
+			inputFileTracks = args[2];
+			inputFileGold = args[3];
+			output = args[4];
+			MAX_BLOCK_SIZE = Integer.valueOf(args[5]);
+			MAX_WINDOW_FOR_LARGE_BLOCKS = Integer.valueOf(args[6]);
+			MAX_WINDOW_SIZE = Integer.valueOf(args[7]);
+			SIMILARITY_THRESHOLD = Float.valueOf(args[8]);
+			takeTracksIntoAccount = Boolean.valueOf(args[9]);
+		} else {
+			throw new IllegalArgumentException(
+					"The number of given parameters is wrong!");
+		}
 
 		// create DataSourceContract for discs input
 		// disc_id;freedbdiscid;"artist_name";"disc_title";"genre_title";"disc_released";disc_tracks;disc_seconds;"disc_language"
 		// 7;727827;"Tenacious D";"Tenacious D";"Humour";"2001";19;2843;"eng"
-		FileDataSource discs = new FileDataSource(RecordInputFormat.class,
+		FileDataSource discs = new FileDataSource(DiscsInputFormat.class,
 				inputFileDiscs, "Discs");
-		RecordInputFormat.configureRecordFormat(discs).recordDelimiter('\n')
+		DiscsInputFormat.configureRecordFormat(discs).recordDelimiter('\n')
 				.fieldDelimiter(';').field(DecimalTextIntParser.class, 0) // disc_id
 				.field(DecimalTextIntParser.class, 1) // freedbdiscid
 				.field(VarLengthStringParser.class, 2) // "artist_name"
@@ -172,7 +184,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		ReduceContract sortedNeighbourhoodStep = new ReduceContract.Builder(
 				SortedNeighbourhood.class, PactString.class, BLOCKING_KEY_FIELD)
 				.keyField(PactString.class, BLOCKING_ID_FIELD)
-				.secondaryOrder(new Ordering(BLOCKING_KEY_EXTENDED_FIELD, PactString.class, Order.ASCENDING))
+				.secondaryOrder(
+						new Ordering(BLOCKING_KEY_EXTENDED_FIELD,
+								PactString.class, Order.ASCENDING))
 				.input(balancedBlockFilter).name("second blocking step")
 				.build();
 
@@ -201,14 +215,14 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 
 		// file output result
 		FileDataSink outResult = new FileDataSink(RecordOutputFormat.class,
-				output + "/result", unionStep, "Output Result");
+				output + "/result.csv", unionStep, "Output Result");
 		RecordOutputFormat.configureRecordFormat(outResult)
 				.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
 				.field(PactInteger.class, 0).field(PactInteger.class, 1);
 
 		// file output tp
 		FileDataSink outTruePositives = new FileDataSink(
-				RecordOutputFormat.class, output + "/tp", validatorStep,
+				RecordOutputFormat.class, output + "/tp.csv", validatorStep,
 				"Output True Positives");
 		RecordOutputFormat.configureRecordFormat(outTruePositives)
 				.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
@@ -223,7 +237,6 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
 				.field(PactInteger.class, 0).field(PactString.class, 1)
 				.field(PactString.class, 2);
-		countOutput.setDegreeOfParallelism(1);
 
 		// assemble the PACT plan
 		Collection<GenericDataSink> sinks = new HashSet<GenericDataSink>();
