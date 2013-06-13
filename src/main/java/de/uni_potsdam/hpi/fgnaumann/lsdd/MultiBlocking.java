@@ -89,9 +89,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		// create DataSourceContract for discs input
 		// disc_id;freedbdiscid;"artist_name";"disc_title";"genre_title";"disc_released";disc_tracks;disc_seconds;"disc_language"
 		// 7;727827;"Tenacious D";"Tenacious D";"Humour";"2001";19;2843;"eng"
-		FileDataSource discs = new FileDataSource(DiscsInputFormat.class,
+		FileDataSource discs = new FileDataSource(RecordInputFormat.class,
 				inputFileDiscs, "Discs");
-		DiscsInputFormat.configureRecordFormat(discs).recordDelimiter('\n')
+		RecordInputFormat.configureRecordFormat(discs).recordDelimiter('\n')
 				.fieldDelimiter(';').field(DecimalTextIntParser.class, 0) // disc_id
 				.field(DecimalTextIntParser.class, 1) // freedbdiscid
 				.field(VarLengthStringParser.class, 2) // "artist_name"

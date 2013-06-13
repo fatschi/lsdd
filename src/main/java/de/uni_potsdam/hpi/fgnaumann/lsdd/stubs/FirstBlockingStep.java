@@ -2,7 +2,7 @@ package de.uni_potsdam.hpi.fgnaumann.lsdd.stubs;
 
 import de.uni_potsdam.hpi.fgnaumann.lsdd.BlockingFunction;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking;
-import de.uni_potsdam.hpi.fgnaumann.lsdd.util.AsciiUtils;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.util.UnicodeUtils;
 import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.stubs.MapStub;
 import eu.stratosphere.pact.common.type.PactRecord;
@@ -25,8 +25,8 @@ public class FirstBlockingStep extends MapStub {
 	}
 
 	private void normalizeRecord(PactRecord record) {
-		AsciiUtils.normalizeUnicode(record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class));
-		AsciiUtils.normalizeUnicode(record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class));
+		UnicodeUtils.normalizeUnicode(record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class));
+		UnicodeUtils.normalizeUnicode(record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class));
 	}
 
 }
