@@ -14,8 +14,13 @@ import eu.stratosphere.pact.common.type.base.PactInteger;
  */
 
 public class DuplciateEmitter {
-	public static void emitDuplicate(Collector<PactRecord> out,
-			PactRecord record1, PactRecord record2) {
+	private Collector<PactRecord> out;
+
+	public DuplciateEmitter(Collector<PactRecord> out) {
+		this.out = out;
+	}
+
+	public void emitDuplicate(PactRecord record1, PactRecord record2) {
 		PactRecord outputRecord = new PactRecord();
 		if (record1.getField(0, PactInteger.class).getValue() < record2
 				.getField(0, PactInteger.class).getValue()) {

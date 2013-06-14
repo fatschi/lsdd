@@ -11,31 +11,32 @@ import eu.stratosphere.pact.common.stubs.ReduceStub;
 import eu.stratosphere.pact.common.type.PactRecord;
 
 /**
-	 * Reducer that does the matching step for each record in the block
-	 * 
-	 * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
-	 * @author richard.meissner@student.hpi.uni-potsdam.de
-	 * 
-	 */
-	public class MatchStep extends ReduceStub {
-		@Override
-		public void reduce(Iterator<PactRecord> records,
-				Collector<PactRecord> out) throws Exception {
-			PactRecord tempRecord = new PactRecord();
-			List<PactRecord> r_temp = new ArrayList<PactRecord>();
-			while (records.hasNext()) {
-				tempRecord = records.next();
-				r_temp.add(tempRecord.createCopy());
-			}
-			for (int i = 0; i < r_temp.size(); i++) {
-				for (int j = i + 1; j < r_temp.size(); j++) {
-					PactRecord r1 = r_temp.get(i);
-					PactRecord r2 = r_temp.get(j);
-					
-					if(SimilarityMeasure.isDuplicate(r1, r2)){
-						DuplciateEmitter.emitDuplicate(out, r1, r2);
-					}
+ * Reducer that does the matching step for each record in the block
+ * 
+ * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
+ * @author richard.meissner@student.hpi.uni-potsdam.de
+ * 
+ */
+public class MatchStep extends ReduceStub {
+	@Override
+	public void reduce(Iterator<PactRecord> records, Collector<PactRecord> out)
+			throws Exception {
+		PactRecord tempRecord = new PactRecord();
+		List<PactRecord> r_temp = new ArrayList<PactRecord>();
+		while (records.hasNext()) {
+			tempRecord = records.next();
+			r_temp.add(tempRecord.createCopy());
+		}
+		for (int i = 0; i < r_temp.size(); i++) {
+			for (int j = i + 1; j < r_temp.size(); j++) {
+				PactRecord r1 = r_temp.get(i);
+				PactRecord r2 = r_temp.get(j);
+
+				if (SimilarityMeasure.isDuplicate(r1, r2)) {
+					DuplciateEmitter de = new DuplciateEmitter(out);
+					de.emitDuplicate(r1, r2);
 				}
 			}
 		}
 	}
+}

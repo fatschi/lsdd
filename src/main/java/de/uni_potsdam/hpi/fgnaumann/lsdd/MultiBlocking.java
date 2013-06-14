@@ -68,12 +68,11 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static int MAX_WINDOW_FOR_LARGE_BLOCKS;
 	public static int MAX_WINDOW_SIZE;
 	public static float SIMILARITY_THRESHOLD;
-	public boolean takeTracksIntoAccount;
+	public static boolean takeTracksIntoAccount;
 	
 	//heuristics
-	public static int MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS
-			* MAX_BLOCK_SIZE;
-	public static long THRESHOLD = Math.round(Math.sqrt(MAXIMUM_COMPARISON));
+	public static int MAXIMUM_COMPARISON;
+	public static long THRESHOLD;
 
 	@Override
 	public Plan getPlan(final String... args) {
@@ -93,6 +92,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 			MAX_WINDOW_SIZE = Integer.valueOf(args[7]);
 			SIMILARITY_THRESHOLD = Float.valueOf(args[8]);
 			takeTracksIntoAccount = Boolean.valueOf(args[9]);
+			MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS
+					* MAX_BLOCK_SIZE;
+			THRESHOLD = Math.round(Math.sqrt(MAXIMUM_COMPARISON));
 		} else {
 			throw new IllegalArgumentException(
 					"The number of given parameters is wrong!");
