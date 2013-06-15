@@ -94,9 +94,8 @@ public abstract class BlockingFunction {
 		return nr;
 	}
 	
-	public PactRecord copyWithExplodedBlockingKey(PactRecord record){
-		PactRecord nr = record.createCopy();
-		nr.setField(MultiBlocking.BLOCKING_KEY_EXTENDED_FIELD, explode(record));
-		return nr;
+	public PactRecord setExplodedBlockingKey(PactRecord record){
+		record.setField(MultiBlocking.BLOCKING_KEY_EXTENDED_FIELD, explode(record));
+		return record;
 	}
 }

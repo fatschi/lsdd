@@ -33,4 +33,10 @@ public class ArtistNameSimilarity implements PositiveRule {
 	public int getWeight() {
 		return 2;
 	}
+
+	@Override
+	public boolean matched(PactRecord record1, PactRecord record2) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

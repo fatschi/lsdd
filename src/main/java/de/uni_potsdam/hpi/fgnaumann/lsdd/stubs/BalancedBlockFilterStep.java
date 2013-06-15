@@ -25,7 +25,7 @@ public class BalancedBlockFilterStep extends MapStub {
 					MultiBlocking.BLOCKING_ID_FIELD, PactString.class);
 			for (BlockingFunction bf : BlockingFunction.blockingFuntions) {
 				if (appliedBlockingFunctionId.equals(bf.getID())) {
-					collector.collect(bf.copyWithExplodedBlockingKey(record));
+					collector.collect(bf.setExplodedBlockingKey(record));
 					break;
 				}
 			}

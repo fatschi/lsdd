@@ -33,4 +33,10 @@ public class DiscTitleSimilarity implements PositiveRule {
 	public int getWeight() {
 		return 4;
 	}
+
+	@Override
+	public boolean matched(PactRecord record1, PactRecord record2) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }
