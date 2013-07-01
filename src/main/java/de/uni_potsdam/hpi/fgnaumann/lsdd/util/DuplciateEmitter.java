@@ -22,17 +22,17 @@ public class DuplciateEmitter {
 
 	public void emitDuplicate(PactRecord record1, PactRecord record2) {
 		PactRecord outputRecord = new PactRecord();
-		if (record1.getField(0, PactInteger.class).getValue() < record2
-				.getField(0, PactInteger.class).getValue()) {
+		if (record1.getField(MultiBlocking.DISC_ID_FIELD, PactInteger.class).getValue() < record2
+				.getField(MultiBlocking.DISC_ID_FIELD, PactInteger.class).getValue()) {
 			outputRecord.setField(MultiBlocking.DUPLICATE_ID_1_FIELD,
-					record1.getField(0, PactInteger.class));
+					record1.getField(MultiBlocking.DISC_ID_FIELD, PactInteger.class));
 			outputRecord.setField(MultiBlocking.DUPLICATE_ID_2_FIELD,
-					record2.getField(0, PactInteger.class));
+					record2.getField(MultiBlocking.DISC_ID_FIELD, PactInteger.class));
 		} else {
 			outputRecord.setField(MultiBlocking.DUPLICATE_ID_2_FIELD,
-					record1.getField(0, PactInteger.class));
+					record1.getField(MultiBlocking.DISC_ID_FIELD, PactInteger.class));
 			outputRecord.setField(MultiBlocking.DUPLICATE_ID_1_FIELD,
-					record2.getField(0, PactInteger.class));
+					record2.getField(MultiBlocking.DISC_ID_FIELD, PactInteger.class));
 		}
 		out.collect(outputRecord);
 	}

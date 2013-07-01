@@ -17,7 +17,8 @@ public class SimilarityMeasure {;
 //		negativeRules.add(ReleaseYearDifference.getInstance());
 //		positiveRules.add(ArtistNameSimilarity.getInstance());
 //		positiveRules.add(DiscTitleSimilarity.getInstance());
-		positiveRules.add(CombinedSimilarity.getInstance());
+//		positiveRules.add(Combined2Similarity.getInstance());
+		positiveRules.add(AlwaysTrueSimilarity.getInstance());
 	}
 
 	public static boolean isDuplicate(PactRecord record1, PactRecord record2) {

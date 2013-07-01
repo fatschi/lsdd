@@ -63,7 +63,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static final int DUPLICATE_ID_2_FIELD = 1;
 
 	// stats
-	private static int MAX_BLOCK_SIZE = 140000;
+	private static int MAX_BLOCK_SIZE = 20000;
 	// parameters
 	public static int MAX_WINDOW_FOR_LARGE_BLOCKS = 3;
 	public static int MAX_WINDOW_SIZE = 25;
@@ -71,7 +71,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static boolean takeTracksIntoAccount = false;
 	public static int MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS
 			* MAX_BLOCK_SIZE;
-	public static int THRESHOLD = (int) Math.round(Math.sqrt(MAXIMUM_COMPARISON));
+	public static int THRESHOLD = Integer.MAX_VALUE; //(int) Math.round(Math.sqrt(MAXIMUM_COMPARISON));
 	
 
 	@Override
@@ -205,8 +205,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.keyField(PactString.class, BLOCKING_ID_FIELD)
 				.keyField(PactString.class, BLOCKING_KEY_FIELD)
 				.input(countStep).name("count output step").build();
+		
+		
 		unionStep.addInput(matchStepReducerBalanced);
-
 		// file output result
 		FileDataSink outResult = new FileDataSink(RecordOutputFormat.class,
 				output + "/result.csv", unionStep, "Output Result");
@@ -234,12 +235,21 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.field(PactInteger.class, 0).field(PactString.class, 1)
 				.field(PactString.class, 2);
 		countOutput.setDegreeOfParallelism(1);
+//		FileDataSink blocksOutput = new FileDataSink(RecordOutputFormat.class,
+//				output + "/blocks.csv", countStep,
+//				"Output Block");
+//		RecordOutputFormat.configureRecordFormat(blocksOutput)
+//				.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
+//				.field(PactInteger.class, DISC_ID_FIELD).field(PactString.class, BLOCKING_KEY_FIELD)
+//				.field(PactString.class, BLOCKING_ID_FIELD);
+//		blocksOutput.setDegreeOfParallelism(1);
 
 		// assemble the PACT plan
 		Collection<GenericDataSink> sinks = new HashSet<GenericDataSink>();
 		sinks.add(outResult);
 		sinks.add(outTruePositives);
 		sinks.add(countOutput);
+//		sinks.add(blocksOutput);
 		Plan plan = new Plan(sinks, "MultiBlocking");
 		plan.setDefaultParallelism(noSubtasks);
 
