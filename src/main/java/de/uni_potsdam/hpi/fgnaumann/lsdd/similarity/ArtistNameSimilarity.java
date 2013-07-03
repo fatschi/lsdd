@@ -1,14 +1,14 @@
 package de.uni_potsdam.hpi.fgnaumann.lsdd.similarity;
 
 import uk.ac.shef.wit.simmetrics.similaritymetrics.AbstractStringMetric;
-import uk.ac.shef.wit.simmetrics.similaritymetrics.Levenshtein;
+import uk.ac.shef.wit.simmetrics.similaritymetrics.JaroWinkler;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking;
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactString;
 
 public class ArtistNameSimilarity implements PositiveRule {
 	private static ArtistNameSimilarity instance = null;
-	private static AbstractStringMetric dist = new Levenshtein();
+	private static AbstractStringMetric dist = new JaroWinkler();
 
 	private ArtistNameSimilarity() {
 	}
@@ -31,7 +31,7 @@ public class ArtistNameSimilarity implements PositiveRule {
 
 	@Override
 	public int getWeight() {
-		return 2;
+		return 3;
 	}
 
 	@Override

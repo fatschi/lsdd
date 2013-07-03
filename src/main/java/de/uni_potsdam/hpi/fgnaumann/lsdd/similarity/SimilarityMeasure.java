@@ -17,7 +17,7 @@ public class SimilarityMeasure {;
 //		negativeRules.add(ReleaseYearDifference.getInstance());
 //		positiveRules.add(ArtistNameSimilarity.getInstance());
 //		positiveRules.add(DiscTitleSimilarity.getInstance());
-//		positiveRules.add(Combined2Similarity.getInstance());
+		//positiveRules.add(Combined2Similarity.getInstance());
 		positiveRules.add(AlwaysTrueSimilarity.getInstance());
 	}
 

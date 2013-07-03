@@ -1,6 +1,7 @@
 package de.uni_potsdam.hpi.fgnaumann.lsdd.similarity;
 
 import uk.ac.shef.wit.simmetrics.similaritymetrics.AbstractStringMetric;
+import uk.ac.shef.wit.simmetrics.similaritymetrics.JaroWinkler;
 import uk.ac.shef.wit.simmetrics.similaritymetrics.Levenshtein;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking;
 import eu.stratosphere.pact.common.type.PactRecord;
