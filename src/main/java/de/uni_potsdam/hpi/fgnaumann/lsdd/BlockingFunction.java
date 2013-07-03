@@ -6,6 +6,7 @@ import java.util.Set;
 import org.apache.commons.codec.language.Soundex;
 
 import de.uni_potsdam.hpi.fgnaumann.lsdd.util.AsciiUtils;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.util.UnicodeUtils;
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactString;
 

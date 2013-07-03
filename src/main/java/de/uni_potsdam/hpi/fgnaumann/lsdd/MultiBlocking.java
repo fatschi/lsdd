@@ -64,7 +64,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static final int DUPLICATE_ID_2_FIELD = 1;
 
 	// stats
-	private static int MAX_BLOCK_SIZE = 200000;
+	private static int MAX_BLOCK_SIZE = 20000;
 	// parameters
 	public static int MAX_WINDOW_FOR_LARGE_BLOCKS = 5;
 	public static int MAX_WINDOW_SIZE = 25;

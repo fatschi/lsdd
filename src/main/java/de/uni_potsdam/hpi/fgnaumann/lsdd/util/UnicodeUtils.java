@@ -11,11 +11,11 @@ public class UnicodeUtils {
 	 * 
 	 */
 	static Pattern normalizationFinalizationPattern = Pattern
-			.compile("[\\p{InCombiningDiacriticalMarks}\\p{IsLm}\\p{IsSk}]+");
+			.compile("[^a-zA-Z0-9]");
+//			.compile("[\\p{InCombiningDiacriticalMarks}\\p{IsLm}\\p{IsSk}]+");
 
 	public static void normalizeUnicode(PactString unnormalizedPactString) {
-		String normalizedString = Normalizer.normalize(
-				unnormalizedPactString.getValue(), Normalizer.Form.NFD);
+		String normalizedString = unnormalizedPactString.getValue(); //Normalizer.normalize(unnormalizedPactString.getValue(), Normalizer.Form.NFD);
 		normalizedString = normalizationFinalizationPattern.matcher(
 				normalizedString).replaceAll("");
 		unnormalizedPactString.setValue(normalizedString);
