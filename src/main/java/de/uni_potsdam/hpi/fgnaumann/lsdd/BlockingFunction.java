@@ -273,8 +273,8 @@ public abstract class BlockingFunction {
 					UnicodeUtils.normalizeUnicode(title);
 					Soundex soundex = new Soundex();
 					int length = title.length();
-					title = length > 4 ? title.substring(length-4, length-1) : title;
-					PactString blockingKey = new PactString(title+soundex.soundex(artist.getValue()));
+					String s_title = length > 4 ? title.getValue().substring(length-4, length-1) : title.getValue();
+					PactString blockingKey = new PactString(s_title+soundex.soundex(artist.getValue()));
 					AsciiUtils.toLowerCase(blockingKey);
 					return blockingKey;
 				}
@@ -307,8 +307,8 @@ public abstract class BlockingFunction {
 					UnicodeUtils.normalizeUnicode(title);
 					Soundex soundex = new Soundex();
 					int length = artist.length();
-					artist = length > 4 ? artist.substring(length-4, length-1) : artist;
-					PactString blockingKey = new PactString(soundex.soundex(title.getValue())+artist);
+					String s_artist = length > 4 ? artist.getValue().substring(length-4, length-1) : artist.getValue();
+					PactString blockingKey = new PactString(soundex.soundex(title.getValue())+s_artist);
 					AsciiUtils.toLowerCase(blockingKey);
 					return blockingKey;
 				}

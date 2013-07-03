@@ -177,7 +177,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.build();
 		
 		ReduceContract unionStep1 = new ReduceContract.Builder(UnionStep.class,
-				PactString.class, DUPLICATE_ID_1_FIELD)
+				PactInteger.class, DUPLICATE_ID_1_FIELD)
 				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD)
 				.input(matchStepReducerBalanced)
 				.name("union step 1").build();
@@ -193,7 +193,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.build();
 
 		ReduceContract unionStep2 = new ReduceContract.Builder(UnionStep.class,
-				PactString.class, DUPLICATE_ID_1_FIELD)
+				PactInteger.class, DUPLICATE_ID_1_FIELD)
 				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD)
 				.input(sortedNeighbourhoodStep).name("union step 2").build();
 		unionStep2.addInput(unionStep1);
@@ -216,7 +216,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.input(countStep).name("count output step").build();
 		
 		
-		unionStep2.addInput(matchStepReducerBalanced);
+//		unionStep2.addInput(matchStepReducerBalanced);
 		// file output result
 		FileDataSink outResult = new FileDataSink(RecordOutputFormat.class,
 				output + "/result.csv", unionStep2, "Output Result");
