@@ -23,36 +23,28 @@ public abstract class BlockingFunction {
 
 				@Override
 				PactString explode(PactRecord record) {
-					String artist = record
-							.getField(MultiBlocking.ARTIST_NAME_FIELD,
-									PactString.class).getValue()
-							.replace("\"", "").replaceAll("[^a-zA-Z0-9]", "");
-					String title = record
-							.getField(MultiBlocking.DISC_TITLE_FIELD,
-									PactString.class).getValue()
-							.replace("\"", "").replaceAll("[^a-zA-Z0-9]", "");
+					PactString artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class);
+					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
+					AsciiUtils.replaceNonWordChars(artist, '\0');
+					AsciiUtils.replaceNonWordChars(title, '\0');
 					Soundex soundex = new Soundex();
 					PactString blockingKey = new PactString(
-							soundex.soundex(artist) + title);
+							soundex.soundex(artist.getValue()) + title.getValue());
 					AsciiUtils.toLowerCase(blockingKey);
 					return blockingKey;
 				}
 
 				@Override
 				PactString function(PactRecord record) {
-					String artist = record
-							.getField(MultiBlocking.ARTIST_NAME_FIELD,
-									PactString.class).getValue()
-							.replace("\"", "").replaceAll("[^a-zA-Z0-9]", "");
-					String title = record
-							.getField(MultiBlocking.DISC_TITLE_FIELD,
-									PactString.class).getValue()
-							.replace("\"", "").replaceAll("[^a-zA-Z0-9]", "");
+					PactString artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class);
+					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
+					AsciiUtils.replaceNonWordChars(artist, '\0');
+					AsciiUtils.replaceNonWordChars(title, '\0');
 					int length = title.length();
-					String s_title = length > 4 ? title.substring(length-4, length-1) : title;
+					String s_title = length > 4 ? title.getValue().substring(length-4, length-1) : title.getValue();
 					Soundex soundex = new Soundex();
 					PactString blockingKey = new PactString(
-							soundex.soundex(artist)+s_title);
+							soundex.soundex(artist.getValue())+s_title);
 					AsciiUtils.toLowerCase(blockingKey);
 					return blockingKey;
 				}
@@ -65,28 +57,24 @@ public abstract class BlockingFunction {
 
 				@Override
 				PactString explode(PactRecord record) {
-					String title = record
-							.getField(MultiBlocking.DISC_TITLE_FIELD,
-									PactString.class).getValue()
-							.replace("\"", "").replaceAll("[^a-zA-Z0-9]", "");
+					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
+					AsciiUtils.replaceNonWordChars(title, '\0');
 					Soundex soundex = new Soundex();
 					PactString blockingKey = new PactString(
-							soundex.soundex(title) + title);
+							soundex.soundex(title.getValue()) + title.getValue());
 					AsciiUtils.toLowerCase(blockingKey);
 					return blockingKey;
 				}
 
 				@Override
 				PactString function(PactRecord record) {
-					String title = record
-							.getField(MultiBlocking.DISC_TITLE_FIELD,
-									PactString.class).getValue()
-							.replace("\"", "").replaceAll("[^a-zA-Z0-9]", "");
+					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
+					AsciiUtils.replaceNonWordChars(title, '\0');
 					int length = title.length();
-					String s_title = length > 4 ? title.substring(length-4, length-1) : title;
+					String s_title = length > 4 ? title.getValue().substring(length-4, length-1) : title.getValue();
 					Soundex soundex = new Soundex();
 					PactString blockingKey = new PactString(
-							soundex.soundex(title)+s_title);
+							soundex.soundex(title.getValue())+s_title);
 					AsciiUtils.toLowerCase(blockingKey);
 					return blockingKey;
 				}
@@ -266,22 +254,26 @@ public abstract class BlockingFunction {
 				
 				@Override
 				PactString explode(PactRecord record){
-					String title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
-					String artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
+					PactString artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class);
+					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
+					AsciiUtils.replaceNonWordChars(artist, '\0');
+					AsciiUtils.replaceNonWordChars(title, '\0');
 					Soundex soundex = new Soundex();
-					PactString blockingKey = new PactString(title+soundex.soundex(artist));
+					PactString blockingKey = new PactString(title.getValue()+soundex.soundex(artist.getValue()));
 					AsciiUtils.toLowerCase(blockingKey);
 					return blockingKey;						
 				}
 				
 				@Override
 				PactString function(PactRecord record) {
-					String title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
-					String artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
+					PactString artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class);
+					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
+					AsciiUtils.replaceNonWordChars(artist, '\0');
+					AsciiUtils.replaceNonWordChars(title, '\0');
 					Soundex soundex = new Soundex();
 					int length = title.length();
 					title = length > 4 ? title.substring(length-4, length-1) : title;
-					PactString blockingKey = new PactString(title+soundex.soundex(artist));
+					PactString blockingKey = new PactString(title+soundex.soundex(artist.getValue()));
 					AsciiUtils.toLowerCase(blockingKey);
 					return blockingKey;
 				}
@@ -296,22 +288,26 @@ public abstract class BlockingFunction {
 				
 				@Override
 				PactString explode(PactRecord record){
-					String title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
-					String artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
+					PactString artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class);
+					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
+					AsciiUtils.replaceNonWordChars(artist, '\0');
+					AsciiUtils.replaceNonWordChars(title, '\0');
 					Soundex soundex = new Soundex();
-					PactString blockingKey = new PactString(soundex.soundex(title)+artist);
+					PactString blockingKey = new PactString(soundex.soundex(title.getValue())+artist);
 					AsciiUtils.toLowerCase(blockingKey);
 					return blockingKey;						
 				}
 				
 				@Override
 				PactString function(PactRecord record) {
-					String title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
-					String artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue().replace("\"", "").replaceAll("[^a-zA-Z0-9]","");
+					PactString artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class);
+					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
+					AsciiUtils.replaceNonWordChars(artist, '\0');
+					AsciiUtils.replaceNonWordChars(title, '\0');
 					Soundex soundex = new Soundex();
 					int length = artist.length();
 					artist = length > 4 ? artist.substring(length-4, length-1) : artist;
-					PactString blockingKey = new PactString(soundex.soundex(title)+artist);
+					PactString blockingKey = new PactString(soundex.soundex(title.getValue())+artist);
 					AsciiUtils.toLowerCase(blockingKey);
 					return blockingKey;
 				}
