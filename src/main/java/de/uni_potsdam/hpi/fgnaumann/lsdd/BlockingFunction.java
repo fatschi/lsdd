@@ -27,8 +27,8 @@ public abstract class BlockingFunction {
 				PactString explode(PactRecord record) {
 					PactString artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class);
 					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
-					AsciiUtils.replaceNonWordChars(artist, '\0');
-					AsciiUtils.replaceNonWordChars(title, '\0');
+					UnicodeUtils.normalizeUnicode(artist);
+					UnicodeUtils.normalizeUnicode(title);
 					Soundex soundex = new Soundex();
 					PactString blockingKey = new PactString(
 							soundex.soundex(artist.getValue()) + title.getValue());
@@ -40,8 +40,8 @@ public abstract class BlockingFunction {
 				PactString function(PactRecord record) {
 					PactString artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class);
 					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
-					AsciiUtils.replaceNonWordChars(artist, '\0');
-					AsciiUtils.replaceNonWordChars(title, '\0');
+					UnicodeUtils.normalizeUnicode(artist);
+					UnicodeUtils.normalizeUnicode(title);
 					int length = title.length();
 					String s_title = length > 4 ? title.getValue().substring(length-4, length-1) : title.getValue();
 					Soundex soundex = new Soundex();
@@ -60,7 +60,7 @@ public abstract class BlockingFunction {
 				@Override
 				PactString explode(PactRecord record) {
 					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
-					AsciiUtils.replaceNonWordChars(title, '\0');
+					UnicodeUtils.normalizeUnicode(title);
 					Soundex soundex = new Soundex();
 					PactString blockingKey = new PactString(
 							soundex.soundex(title.getValue()) + title.getValue());
@@ -71,7 +71,7 @@ public abstract class BlockingFunction {
 				@Override
 				PactString function(PactRecord record) {
 					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
-					AsciiUtils.replaceNonWordChars(title, '\0');
+					UnicodeUtils.normalizeUnicode(title);
 					int length = title.length();
 					String s_title = length > 4 ? title.getValue().substring(length-4, length-1) : title.getValue();
 					Soundex soundex = new Soundex();
@@ -258,8 +258,8 @@ public abstract class BlockingFunction {
 				PactString explode(PactRecord record){
 					PactString artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class);
 					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
-					AsciiUtils.replaceNonWordChars(artist, '\0');
-					AsciiUtils.replaceNonWordChars(title, '\0');
+					UnicodeUtils.normalizeUnicode(artist);
+					UnicodeUtils.normalizeUnicode(title);
 					Soundex soundex = new Soundex();
 					PactString blockingKey = new PactString(title.getValue()+soundex.soundex(artist.getValue()));
 					AsciiUtils.toLowerCase(blockingKey);
@@ -270,8 +270,8 @@ public abstract class BlockingFunction {
 				PactString function(PactRecord record) {
 					PactString artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class);
 					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
-					AsciiUtils.replaceNonWordChars(artist, '\0');
-					AsciiUtils.replaceNonWordChars(title, '\0');
+					UnicodeUtils.normalizeUnicode(artist);
+					UnicodeUtils.normalizeUnicode(title);
 					Soundex soundex = new Soundex();
 					int length = title.length();
 					title = length > 4 ? title.substring(length-4, length-1) : title;
@@ -292,8 +292,8 @@ public abstract class BlockingFunction {
 				PactString explode(PactRecord record){
 					PactString artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class);
 					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
-					AsciiUtils.replaceNonWordChars(artist, '\0');
-					AsciiUtils.replaceNonWordChars(title, '\0');
+					UnicodeUtils.normalizeUnicode(artist);
+					UnicodeUtils.normalizeUnicode(title);
 					Soundex soundex = new Soundex();
 					PactString blockingKey = new PactString(soundex.soundex(title.getValue())+artist);
 					AsciiUtils.toLowerCase(blockingKey);
@@ -304,8 +304,8 @@ public abstract class BlockingFunction {
 				PactString function(PactRecord record) {
 					PactString artist = record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class);
 					PactString title = record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class);
-					AsciiUtils.replaceNonWordChars(artist, '\0');
-					AsciiUtils.replaceNonWordChars(title, '\0');
+					UnicodeUtils.normalizeUnicode(artist);
+					UnicodeUtils.normalizeUnicode(title);
 					Soundex soundex = new Soundex();
 					int length = artist.length();
 					artist = length > 4 ? artist.substring(length-4, length-1) : artist;
