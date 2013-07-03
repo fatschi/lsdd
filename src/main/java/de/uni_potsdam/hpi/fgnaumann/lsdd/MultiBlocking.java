@@ -39,6 +39,7 @@ import eu.stratosphere.pact.common.type.base.parser.VarLengthStringParser;
 /**
  * A Stratosphere-Pact-Implementation of "A fast approach for parallel
  * deduplication on multicore processors" - Guilherme Dal Bianco et al.
+ * with variations in big block handling.
  * 
  * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
  * 
@@ -63,15 +64,15 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static final int DUPLICATE_ID_2_FIELD = 1;
 
 	// stats
-	private static int MAX_BLOCK_SIZE = 20000;
+	private static int MAX_BLOCK_SIZE = 200000;
 	// parameters
-	public static int MAX_WINDOW_FOR_LARGE_BLOCKS = 3;
+	public static int MAX_WINDOW_FOR_LARGE_BLOCKS = 5;
 	public static int MAX_WINDOW_SIZE = 25;
 	public static float SIMILARITY_THRESHOLD = 0.9f;
 	public static boolean takeTracksIntoAccount = false;
 	public static int MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS
 			* MAX_BLOCK_SIZE;
-	public static int THRESHOLD = Integer.MAX_VALUE; //(int) Math.round(Math.sqrt(MAXIMUM_COMPARISON));
+	public static int THRESHOLD = (int) Math.round(Math.sqrt(MAXIMUM_COMPARISON));
 	
 
 	@Override
@@ -174,6 +175,13 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.keyField(PactString.class, BLOCKING_ID_FIELD)
 				.input(unbalancedBlockFilter).name("match step balanced")
 				.build();
+		
+		ReduceContract unionStep1 = new ReduceContract.Builder(UnionStep.class,
+				PactString.class, DUPLICATE_ID_1_FIELD)
+				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD)
+				.input(matchStepReducerBalanced)
+				.name("union step 1").build();
+		
 
 		ReduceContract sortedNeighbourhoodStep = new ReduceContract.Builder(
 				SortedNeighbourhood.class, PactString.class, BLOCKING_KEY_FIELD)
@@ -184,17 +192,18 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.input(balancedBlockFilter).name("second blocking step")
 				.build();
 
-		ReduceContract unionStep = new ReduceContract.Builder(UnionStep.class,
+		ReduceContract unionStep2 = new ReduceContract.Builder(UnionStep.class,
 				PactString.class, DUPLICATE_ID_1_FIELD)
 				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD)
-				.input(sortedNeighbourhoodStep).name("union step").build();
-		unionStep.addInput(matchStepReducerBalanced);
+				.input(sortedNeighbourhoodStep).name("union step 2").build();
+		unionStep2.addInput(unionStep1);
+		unionStep2.setDegreeOfParallelism(1);
 
 		MatchContract validatorStep = MatchContract
 				.builder(ValidatorStep.class, PactInteger.class,
 						DUPLICATE_ID_1_FIELD, DUPLICATE_ID_1_FIELD)
 				.input1(gold)
-				.input2(unionStep)
+				.input2(unionStep2)
 				.name("validator step")
 				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD,
 						DUPLICATE_ID_2_FIELD).build();
@@ -207,10 +216,10 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.input(countStep).name("count output step").build();
 		
 		
-		unionStep.addInput(matchStepReducerBalanced);
+		unionStep2.addInput(matchStepReducerBalanced);
 		// file output result
 		FileDataSink outResult = new FileDataSink(RecordOutputFormat.class,
-				output + "/result.csv", unionStep, "Output Result");
+				output + "/result.csv", unionStep2, "Output Result");
 		RecordOutputFormat.configureRecordFormat(outResult)
 				.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
 				.field(PactInteger.class, 0).field(PactInteger.class, 1);

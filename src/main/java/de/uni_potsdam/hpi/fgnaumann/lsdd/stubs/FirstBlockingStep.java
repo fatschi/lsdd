@@ -25,6 +25,8 @@ public class FirstBlockingStep extends MapStub {
 	}
 
 	private void normalizeRecord(PactRecord record) {
+		String releasedField = record.getField(MultiBlocking.DISC_RELEASED_FIELD, PactString.class).getValue().replace("\"","");
+		record.setField(MultiBlocking.DISC_RELEASED_FIELD, new PactString(releasedField));
 		UnicodeUtils.normalizeUnicode(record.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class));
 		UnicodeUtils.normalizeUnicode(record.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class));
 	}
