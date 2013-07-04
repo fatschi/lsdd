@@ -17,16 +17,11 @@ public class AlwaysTrueSimilarity implements PositiveRule {
 
 	@Override
 	public float similarity(PactRecord record1, PactRecord record2) {
-		return 0f;
+		return 1f;
 	}
 
 	@Override
 	public int getWeight() {
-		return 0;
-	}
-
-	@Override
-	public boolean matched(PactRecord record1, PactRecord record2) {
-		return true;
+		return 1;
 	}
 }

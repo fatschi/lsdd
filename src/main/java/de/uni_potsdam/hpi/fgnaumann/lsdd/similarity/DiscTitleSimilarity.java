@@ -1,7 +1,6 @@
 package de.uni_potsdam.hpi.fgnaumann.lsdd.similarity;
 
 import uk.ac.shef.wit.simmetrics.similaritymetrics.AbstractStringMetric;
-import uk.ac.shef.wit.simmetrics.similaritymetrics.JaroWinkler;
 import uk.ac.shef.wit.simmetrics.similaritymetrics.Levenshtein;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking;
 import eu.stratosphere.pact.common.type.PactRecord;
@@ -33,11 +32,5 @@ public class DiscTitleSimilarity implements PositiveRule {
 	@Override
 	public int getWeight() {
 		return 4;
-	}
-
-	@Override
-	public boolean matched(PactRecord record1, PactRecord record2) {
-		// TODO Auto-generated method stub
-		return false;
 	}
 }

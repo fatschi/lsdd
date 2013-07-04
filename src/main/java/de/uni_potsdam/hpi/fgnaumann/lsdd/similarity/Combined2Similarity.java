@@ -35,48 +35,48 @@ public class Combined2Similarity implements PositiveRule {
 		return 0;
 	}
 
-	@Override
-	public boolean matched(PactRecord record1, PactRecord record2) {
-		String emptyString = "";
-		return greaterThan(
-				levenshtein(record1.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue(), record2.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue()),
-				ifThenElse(
-						greaterThan(
-								levenshtein(record2.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue(), record1.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue()),
-								ifThenElse(
-										greaterThan(
-												soundex(record2.getField(MultiBlocking.DISC_RELEASED_FIELD, PactString.class).getValue(), emptyString),
-												0.7505004426448455),
-										levenshtein(record1.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue(),
-												record2.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue()),
-										0.7339006368323561)),
-						ifThenElse(
-								greaterThan(
-										euclidean(emptyString, record2.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue()),
-										ifThenElse(
-												greaterThan(
-														levenshtein(
-																record2.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue(),
-																record1.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue()),
-														0.7505004426448455),
-												ifThenElse(
-														greaterThan(
-																euclidean(
-																		emptyString,
-																		record2.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue()),
-																dice(record1.getField(MultiBlocking.GENRE_TITLE_FIELD, PactString.class).getValue(),
-																		record1.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue())),
-														jaroWinkler(
-																substring(
-																		record1.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue(),
-																		686673648,
-																		lengthOf(emptyString)),
-																emptyString),
-														0.30465158192619746),
-												0.7339006368323561)),
-								jaroWinkler(record2.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue(), emptyString),
-								0.30465158192619746), 0.7339006368323561));
-	}
+//	@Override
+//	public boolean matched(PactRecord record1, PactRecord record2) {
+//		String emptyString = "";
+//		return greaterThan(
+//				levenshtein(record1.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue(), record2.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue()),
+//				ifThenElse(
+//						greaterThan(
+//								levenshtein(record2.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue(), record1.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue()),
+//								ifThenElse(
+//										greaterThan(
+//												soundex(record2.getField(MultiBlocking.DISC_RELEASED_FIELD, PactString.class).getValue(), emptyString),
+//												0.7505004426448455),
+//										levenshtein(record1.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue(),
+//												record2.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue()),
+//										0.7339006368323561)),
+//						ifThenElse(
+//								greaterThan(
+//										euclidean(emptyString, record2.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue()),
+//										ifThenElse(
+//												greaterThan(
+//														levenshtein(
+//																record2.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue(),
+//																record1.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue()),
+//														0.7505004426448455),
+//												ifThenElse(
+//														greaterThan(
+//																euclidean(
+//																		emptyString,
+//																		record2.getField(MultiBlocking.ARTIST_NAME_FIELD, PactString.class).getValue()),
+//																dice(record1.getField(MultiBlocking.GENRE_TITLE_FIELD, PactString.class).getValue(),
+//																		record1.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue())),
+//														jaroWinkler(
+//																substring(
+//																		record1.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue(),
+//																		686673648,
+//																		lengthOf(emptyString)),
+//																emptyString),
+//														0.30465158192619746),
+//												0.7339006368323561)),
+//								jaroWinkler(record2.getField(MultiBlocking.DISC_TITLE_FIELD, PactString.class).getValue(), emptyString),
+//								0.30465158192619746), 0.7339006368323561));
+//	}
 
 	private static boolean greaterThan(double d1, double d2) {
 		return d1 > d2;

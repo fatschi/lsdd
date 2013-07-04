@@ -64,7 +64,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static final int DUPLICATE_ID_2_FIELD = 1;
 
 	// stats
-	private static int MAX_BLOCK_SIZE = 20000;
+	private static int MAX_BLOCK_SIZE = 2000;//6655;
 	// parameters
 	public static int MAX_WINDOW_FOR_LARGE_BLOCKS = 5;
 	public static int MAX_WINDOW_SIZE = 25;
@@ -135,27 +135,10 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.field(DecimalTextIntParser.class, DUPLICATE_ID_1_FIELD) // disc_id1
 				.field(DecimalTextIntParser.class, DUPLICATE_ID_2_FIELD); // disc_id1
 
-		CoGroupContract coGrouper = null;
-		if (takeTracksIntoAccount) {
-			coGrouper = CoGroupContract
-					.builder(CoGroupCDsWithTracks.class, PactInteger.class, 0,
-							0).name("Group CDs with Tracks").build();
-
-			coGrouper.setFirstInput(discs);
-			coGrouper.setSecondInput(tracks);
-		}
-
 		// contracts
-		MapContract firstBlockingStep = null;
-		if (takeTracksIntoAccount) {
-			firstBlockingStep = MapContract.builder(FirstBlockingStep.class)
-					.input(coGrouper)
-					.name("first blocking step with track list").build();
-		} else {
-			firstBlockingStep = MapContract.builder(FirstBlockingStep.class)
+			MapContract firstBlockingStep = MapContract.builder(FirstBlockingStep.class)
 					.input(discs)
 					.name("first blocking step without track list").build();
-		}
 
 		ReduceContract countStep = new ReduceContract.Builder(CountStep.class,
 				PactString.class, BLOCKING_KEY_FIELD)
@@ -169,28 +152,62 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		MapContract balancedBlockFilter = MapContract
 				.builder(BalancedBlockFilterStep.class).input(countStep)
 				.name("filter balanced blocks step").build();
+		
+		ReduceContract matchStepReducerBalanced;
+		if (takeTracksIntoAccount) {
+			CoGroupContract coGrouperBalanced = CoGroupContract
+					.builder(CoGroupCDsWithTracks.class, PactInteger.class, 0,
+							0).name("Group CDs with Tracks").build();
 
-		ReduceContract matchStepReducerBalanced = new ReduceContract.Builder(
-				MatchStep.class, PactString.class, BLOCKING_KEY_FIELD)
-				.keyField(PactString.class, BLOCKING_ID_FIELD)
-				.input(unbalancedBlockFilter).name("match step balanced")
-				.build();
+			coGrouperBalanced.setFirstInput(unbalancedBlockFilter);
+			coGrouperBalanced.setSecondInput(tracks);
+			
+			matchStepReducerBalanced = new ReduceContract.Builder(
+					MatchStep.class, PactString.class, BLOCKING_KEY_FIELD)
+					.keyField(PactString.class, BLOCKING_ID_FIELD)
+					.input(coGrouperBalanced).name("match step balanced")
+					.build();
+		} else{
+			matchStepReducerBalanced = new ReduceContract.Builder(
+					MatchStep.class, PactString.class, BLOCKING_KEY_FIELD)
+					.keyField(PactString.class, BLOCKING_ID_FIELD)
+					.input(unbalancedBlockFilter).name("match step balanced")
+					.build();
+		}
 		
 		ReduceContract unionStep1 = new ReduceContract.Builder(UnionStep.class,
 				PactInteger.class, DUPLICATE_ID_1_FIELD)
 				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD)
 				.input(matchStepReducerBalanced)
 				.name("union step 1").build();
-		
 
-		ReduceContract sortedNeighbourhoodStep = new ReduceContract.Builder(
-				SortedNeighbourhood.class, PactString.class, BLOCKING_KEY_FIELD)
-				.keyField(PactString.class, BLOCKING_ID_FIELD)
-				.secondaryOrder(
-						new Ordering(BLOCKING_KEY_EXTENDED_FIELD,
-								PactString.class, Order.ASCENDING))
-				.input(balancedBlockFilter).name("second blocking step")
-				.build();
+		ReduceContract sortedNeighbourhoodStep;
+		if (takeTracksIntoAccount) {
+			CoGroupContract coGrouperUnBalanced = CoGroupContract
+					.builder(CoGroupCDsWithTracks.class, PactInteger.class, 0,
+							0).name("Group CDs with Tracks").build();
+
+			coGrouperUnBalanced.setFirstInput(balancedBlockFilter);
+			coGrouperUnBalanced.setSecondInput(tracks);
+			
+			sortedNeighbourhoodStep = new ReduceContract.Builder(
+					SortedNeighbourhood.class, PactString.class, BLOCKING_KEY_FIELD)
+					.keyField(PactString.class, BLOCKING_ID_FIELD)
+					.secondaryOrder(
+							new Ordering(BLOCKING_KEY_EXTENDED_FIELD,
+									PactString.class, Order.ASCENDING))
+					.input(coGrouperUnBalanced).name("second blocking step")
+					.build();
+		} else{
+			sortedNeighbourhoodStep = new ReduceContract.Builder(
+					SortedNeighbourhood.class, PactString.class, BLOCKING_KEY_FIELD)
+					.keyField(PactString.class, BLOCKING_ID_FIELD)
+					.secondaryOrder(
+							new Ordering(BLOCKING_KEY_EXTENDED_FIELD,
+									PactString.class, Order.ASCENDING))
+					.input(balancedBlockFilter).name("second blocking step")
+					.build();
+		}
 
 		ReduceContract unionStep2 = new ReduceContract.Builder(UnionStep.class,
 				PactInteger.class, DUPLICATE_ID_1_FIELD)

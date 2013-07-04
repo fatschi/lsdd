@@ -12,13 +12,16 @@ public class SimilarityMeasure {;
 	static Set<PositiveRule> positiveRules = new HashSet<PositiveRule>();
 
 	static {
-//		negativeRules.add(TrackNumberDifference.getInstance());
-//		negativeRules.add(XOrKeywords.getInstance());
-//		negativeRules.add(ReleaseYearDifference.getInstance());
-//		positiveRules.add(ArtistNameSimilarity.getInstance());
-//		positiveRules.add(DiscTitleSimilarity.getInstance());
-		//positiveRules.add(Combined2Similarity.getInstance());
-		positiveRules.add(AlwaysTrueSimilarity.getInstance());
+		negativeRules.add(TrackNumberDifference.getInstance());
+		negativeRules.add(XOrKeywords.getInstance());
+		negativeRules.add(ReleaseYearDifference.getInstance());
+		positiveRules.add(ArtistNameSimilarity.getInstance());
+		positiveRules.add(DiscTitleSimilarity.getInstance());
+		positiveRules.add(Combined2Similarity.getInstance());
+//		positiveRules.add(AlwaysTrueSimilarity.getInstance());
+//		if(MultiBlocking.takeTracksIntoAccount){
+//			positiveRules.add(TracksSimilarity.getInstance());
+//		}
 	}
 
 	public static boolean isDuplicate(PactRecord record1, PactRecord record2) {
@@ -30,10 +33,14 @@ public class SimilarityMeasure {;
 		int multiplierSum = 0;
 		float similarity = 0.0f;
 		for (PositiveRule pr : positiveRules) {
-			if(pr.matched(record1, record2)) return true;
 			similarity += pr.similarity(record1, record2) * pr.getWeight();
 			multiplierSum += pr.getWeight();
 		}
-		return (similarity/multiplierSum > MultiBlocking.SIMILARITY_THRESHOLD);
+		if(similarity/multiplierSum > MultiBlocking.SIMILARITY_THRESHOLD){
+			return true;
+		}else{
+			return false;
+		}
+		 
 	}
 }

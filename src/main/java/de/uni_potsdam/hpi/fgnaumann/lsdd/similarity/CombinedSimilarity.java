@@ -35,15 +35,15 @@ public class CombinedSimilarity implements PositiveRule {
 		return 0;
 	}
 
-	@Override
-	public boolean matched(PactRecord record1, PactRecord record2) {
-		return levenshtein.getSimilarity(
-				record1.getField(MultiBlocking.DISC_TITLE_FIELD,
-						PactString.class).getValue(),
-				record2.getField(MultiBlocking.DISC_TITLE_FIELD,
-						PactString.class).getValue()) > subMeasure1(record1,
-				record2);
-	}
+//	@Override
+//	public boolean matched(PactRecord record1, PactRecord record2) {
+//		return levenshtein.getSimilarity(
+//				record1.getField(MultiBlocking.DISC_TITLE_FIELD,
+//						PactString.class).getValue(),
+//				record2.getField(MultiBlocking.DISC_TITLE_FIELD,
+//						PactString.class).getValue()) > subMeasure1(record1,
+//				record2);
+//	}
 
 	private float subMeasure1(PactRecord record1, PactRecord record2) {
 		if (levenshtein.getSimilarity(
