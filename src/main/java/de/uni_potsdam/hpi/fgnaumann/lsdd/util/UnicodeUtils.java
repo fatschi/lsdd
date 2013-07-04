@@ -1,6 +1,5 @@
 package de.uni_potsdam.hpi.fgnaumann.lsdd.util;
 
-import java.text.Normalizer;
 import java.util.regex.Pattern;
 
 import eu.stratosphere.pact.common.type.base.PactString;
