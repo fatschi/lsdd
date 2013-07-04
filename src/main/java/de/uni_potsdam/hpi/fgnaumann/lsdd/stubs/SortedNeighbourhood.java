@@ -29,6 +29,7 @@ public class SortedNeighbourhood extends ReduceStub {
 
 		int blockSize = tempRecord.getField(MultiBlocking.COUNT_FIELD,
 				PactInteger.class).getValue();
+		//TODO this does not work
 		int windowSize = MultiBlocking.MAX_WINDOW_SIZE < MultiBlocking.MAXIMUM_COMPARISON
 				/ blockSize ? MultiBlocking.MAX_WINDOW_SIZE
 				: MultiBlocking.MAXIMUM_COMPARISON / blockSize;

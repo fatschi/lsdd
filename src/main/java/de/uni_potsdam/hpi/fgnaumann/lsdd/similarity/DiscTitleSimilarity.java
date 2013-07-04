@@ -31,6 +31,6 @@ public class DiscTitleSimilarity implements PositiveRule {
 
 	@Override
 	public int getWeight() {
-		return 4;
+		return 5;
 	}
 }

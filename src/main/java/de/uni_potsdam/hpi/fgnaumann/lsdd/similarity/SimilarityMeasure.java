@@ -18,6 +18,7 @@ public class SimilarityMeasure {;
 		positiveRules.add(ArtistNameSimilarity.getInstance());
 		positiveRules.add(DiscTitleSimilarity.getInstance());
 		positiveRules.add(Combined2Similarity.getInstance());
+		positiveRules.add(TrackNumberSimilarity.getInstance());
 //		positiveRules.add(AlwaysTrueSimilarity.getInstance());
 //		if(MultiBlocking.takeTracksIntoAccount){
 //			positiveRules.add(TracksSimilarity.getInstance());
