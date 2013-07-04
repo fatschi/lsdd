@@ -1,21 +1,21 @@
 package de.uni_potsdam.hpi.fgnaumann.lsdd.similarity;
 
 import uk.ac.shef.wit.simmetrics.similaritymetrics.AbstractStringMetric;
-import uk.ac.shef.wit.simmetrics.similaritymetrics.Levenshtein;
+import uk.ac.shef.wit.simmetrics.similaritymetrics.JaroWinkler;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking;
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactString;
 
-public class DiscTitleSimilarity implements PositiveRule {
-	private static DiscTitleSimilarity instance = null;
-	private static AbstractStringMetric dist = new Levenshtein();
+public class GenreSimilarity implements PositiveRule {
+	private static GenreSimilarity instance = null;
+	private static AbstractStringMetric dist = new JaroWinkler();
 
-	private DiscTitleSimilarity() {
+	private GenreSimilarity() {
 	}
 
-	public static DiscTitleSimilarity getInstance() {
+	public static GenreSimilarity getInstance() {
 		if (instance == null) {
-			instance = new DiscTitleSimilarity();
+			instance = new GenreSimilarity();
 		}
 		return instance;
 	}
@@ -23,14 +23,14 @@ public class DiscTitleSimilarity implements PositiveRule {
 	@Override
 	public float similarity(PactRecord record1, PactRecord record2) {
 		return dist.getSimilarity(
-				record1.getField(MultiBlocking.DISC_TITLE_FIELD,
+				record1.getField(MultiBlocking.GENRE_TITLE_FIELD,
 						PactString.class).getValue(),
-				record2.getField(MultiBlocking.DISC_TITLE_FIELD,
+				record2.getField(MultiBlocking.GENRE_TITLE_FIELD,
 						PactString.class).getValue());
 	}
 
 	@Override
 	public int getWeight() {
-		return 6;
+		return 1;
 	}
 }
