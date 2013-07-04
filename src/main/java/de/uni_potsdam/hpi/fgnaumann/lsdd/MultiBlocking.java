@@ -69,7 +69,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static int MAX_WINDOW_FOR_LARGE_BLOCKS = 5;
 	public static int MAX_WINDOW_SIZE = 25;
 	public static float SIMILARITY_THRESHOLD = 0.9f;
-	public static boolean takeTracksIntoAccount = true;
+	public static boolean takeTracksIntoAccount = false;
 	public static int MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS
 			* MAX_BLOCK_SIZE;
 	public static int THRESHOLD = (int) Math.round(Math.sqrt(MAXIMUM_COMPARISON));

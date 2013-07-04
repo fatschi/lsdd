@@ -12,14 +12,14 @@ public class SimilarityMeasure {;
 	static Set<PositiveRule> positiveRules = new HashSet<PositiveRule>();
 
 	static {
-		negativeRules.add(TrackNumberDifference.getInstance());
-		negativeRules.add(XOrKeywords.getInstance());
-		negativeRules.add(ReleaseYearDifference.getInstance());
-		positiveRules.add(ArtistNameSimilarity.getInstance());
-		positiveRules.add(DiscTitleSimilarity.getInstance());
-		positiveRules.add(TrackNumberSimilarity.getInstance());
-		positiveRules.add(GenreSimilarity.getInstance());
-//		positiveRules.add(AlwaysTrueSimilarity.getInstance());
+//		negativeRules.add(TrackNumberDifference.getInstance());
+//		negativeRules.add(XOrKeywords.getInstance());
+//		negativeRules.add(ReleaseYearDifference.getInstance());
+//		positiveRules.add(ArtistNameSimilarity.getInstance());
+//		positiveRules.add(DiscTitleSimilarity.getInstance());
+//		positiveRules.add(TrackNumberSimilarity.getInstance());
+//		positiveRules.add(GenreSimilarity.getInstance());
+		positiveRules.add(AlwaysTrueSimilarity.getInstance());
 //		if(MultiBlocking.takeTracksIntoAccount){
 //			positiveRules.add(TracksSimilarity.getInstance());
 //		}
