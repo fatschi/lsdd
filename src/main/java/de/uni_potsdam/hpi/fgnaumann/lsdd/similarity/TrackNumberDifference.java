@@ -20,7 +20,7 @@ public class TrackNumberDifference implements NegativeRule{
 	public boolean duplicateRuledOut(PactRecord record1, PactRecord record2) {
 		int record1DiscTracks = record1.getField(MultiBlocking.DISC_TRACKS_FIELD, PactInteger.class).getValue();
 		int record2DiscTracks = record2.getField(MultiBlocking.DISC_TRACKS_FIELD, PactInteger.class).getValue();
-		if(Math.abs(record2DiscTracks-record1DiscTracks)>Math.max(record1DiscTracks, record2DiscTracks)/10.0){
+		if(Math.abs(record2DiscTracks-record1DiscTracks)>Math.max(record1DiscTracks, record2DiscTracks)/5.0){
 			return true;
 		}
 		return false;

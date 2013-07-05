@@ -12,17 +12,23 @@ public class SimilarityMeasure {;
 	static Set<PositiveRule> positiveRules = new HashSet<PositiveRule>();
 
 	static {
-//		negativeRules.add(TrackNumberDifference.getInstance());
-//		negativeRules.add(XOrKeywords.getInstance());
-//		negativeRules.add(ReleaseYearDifference.getInstance());
-//		positiveRules.add(ArtistNameSimilarity.getInstance());
-//		positiveRules.add(DiscTitleSimilarity.getInstance());
-//		positiveRules.add(TrackNumberSimilarity.getInstance());
-//		positiveRules.add(GenreSimilarity.getInstance());
-		positiveRules.add(AlwaysTrueSimilarity.getInstance());
+		//negative rules
+		negativeRules.add(TrackNumberDifference.getInstance());
+		negativeRules.add(ReleaseYearDifference.getInstance());
+		negativeRules.add(XOrKeywords.getInstance());
+		
+		//positive rules
+		positiveRules.add(ArtistNameSimilarity.getInstance());
+		positiveRules.add(DiscTitleSimilarity.getInstance());
+		positiveRules.add(TrackNumberSimilarity.getInstance());
+		positiveRules.add(GenreSimilarity.getInstance());
+		positiveRules.add(ReleaseYearSimilarity.getInstance());
+
 //		if(MultiBlocking.takeTracksIntoAccount){
 //			positiveRules.add(TracksSimilarity.getInstance());
 //		}
+		
+//		positiveRules.add(AlwaysTrueSimilarity.getInstance());
 	}
 
 	public static boolean isDuplicate(PactRecord record1, PactRecord record2) {
