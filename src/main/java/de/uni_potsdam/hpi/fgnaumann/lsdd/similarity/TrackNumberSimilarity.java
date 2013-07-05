@@ -27,6 +27,6 @@ public class TrackNumberSimilarity implements PositiveRule {
 
 	@Override
 	public int getWeight() {
-		return 3;
+		return 1;
 	}
 }

@@ -38,8 +38,8 @@ import eu.stratosphere.pact.common.type.base.parser.VarLengthStringParser;
 
 /**
  * A Stratosphere-Pact-Implementation of "A fast approach for parallel
- * deduplication on multicore processors" - Guilherme Dal Bianco et al.
- * with variations in big block handling.
+ * deduplication on multicore processors" - Guilherme Dal Bianco et al. with
+ * variations in big block handling.
  * 
  * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
  * 
@@ -60,6 +60,8 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static final int BLOCKING_ID_FIELD = 11;
 	public static final int BLOCKING_KEY_EXTENDED_FIELD = 12;
 	public static final int COUNT_FIELD = 13;
+	public static final int TRACK_NUMBER_FIELD = 2;
+	public static final int TRACK_TITLE_FIELD = 2;
 	public static final int DUPLICATE_ID_1_FIELD = 0;
 	public static final int DUPLICATE_ID_2_FIELD = 1;
 
@@ -69,11 +71,11 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static int MAX_WINDOW_FOR_LARGE_BLOCKS = 5;
 	public static int MAX_WINDOW_SIZE = 25;
 	public static float SIMILARITY_THRESHOLD = 0.8f;
-	public static boolean takeTracksIntoAccount = false;
+	public static boolean takeTracksIntoAccount = true;
 	public static int MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS
 			* MAX_BLOCK_SIZE;
-	public static int THRESHOLD = (int) Math.round(Math.sqrt(MAXIMUM_COMPARISON));
-	
+	public static int THRESHOLD = (int) Math.round(Math
+			.sqrt(MAXIMUM_COMPARISON));
 
 	@Override
 	public Plan getPlan(final String... args) {
@@ -99,15 +101,16 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		FileDataSource discs = new FileDataSource(DiscsInputFormat.class,
 				inputFileDiscs, "Discs");
 		DiscsInputFormat.configureRecordFormat(discs).recordDelimiter('\n')
-				.fieldDelimiter(';').field(DecimalTextIntParser.class, 0) // disc_id
-				.field(DecimalTextIntParser.class, 1) // freedbdiscid
-				.field(VarLengthStringParser.class, 2) // "artist_name"
-				.field(VarLengthStringParser.class, 3) // "disc_title"
-				.field(VarLengthStringParser.class, 4) // "genre_title"
-				.field(VarLengthStringParser.class, 5) // "disc_released"
-				.field(DecimalTextIntParser.class, 6) // disc_tracks
-				.field(DecimalTextIntParser.class, 7) // disc_seconds
-				.field(VarLengthStringParser.class, 8); // "disc_language"
+				.fieldDelimiter(';')
+				.field(DecimalTextIntParser.class, DISC_ID_FIELD) // disc_id
+				.field(DecimalTextIntParser.class, DISC_FREEDB_ID_FIELD) // freedbdiscid
+				.field(VarLengthStringParser.class, ARTIST_NAME_FIELD) // "artist_name"
+				.field(VarLengthStringParser.class, DISC_TITLE_FIELD) // "disc_title"
+				.field(VarLengthStringParser.class, GENRE_TITLE_FIELD) // "genre_title"
+				.field(VarLengthStringParser.class, DISC_RELEASED_FIELD) // "disc_released"
+				.field(DecimalTextIntParser.class, DISC_TRACKS_FIELD) // disc_tracks
+				.field(DecimalTextIntParser.class, DISC_SECONDS_FIELD) // disc_seconds
+				.field(VarLengthStringParser.class, DISC_LANGUAGE_FIELD); // "disc_language"
 
 		FileDataSource tracks = null;
 		if (takeTracksIntoAccount) {
@@ -118,9 +121,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 					inputFileTracks, "Tracks");
 			RecordInputFormat.configureRecordFormat(tracks)
 					.recordDelimiter('\n').fieldDelimiter(';')
-					.field(DecimalTextIntParser.class, 0) // disc_id
-					.field(DecimalTextIntParser.class, 1) // freedbdiscid
-					.field(VarLengthStringParser.class, 2) // "track_title"
+					.field(DecimalTextIntParser.class, DISC_ID_FIELD) // disc_id
+					.field(DecimalTextIntParser.class, 1) // track_number
+					.field(VarLengthStringParser.class, TRACK_TITLE_FIELD) // "track_title"
 					.field(VarLengthStringParser.class, 3) // "artist_name"
 					.field(DecimalTextIntParser.class, 4); // track_seconds
 		}
@@ -136,9 +139,24 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.field(DecimalTextIntParser.class, DUPLICATE_ID_2_FIELD); // disc_id1
 
 		// contracts
-			MapContract firstBlockingStep = MapContract.builder(FirstBlockingStep.class)
+		MapContract firstBlockingStep;
+
+		if (takeTracksIntoAccount) {
+			CoGroupContract coGrouper = CoGroupContract
+					.builder(CoGroupCDsWithTracks.class, PactInteger.class, 0,
+							0).name("Group CDs with Tracks").build();
+
+			coGrouper.setFirstInput(discs);
+			coGrouper.setSecondInput(tracks);
+
+			firstBlockingStep = MapContract.builder(FirstBlockingStep.class)
+					.input(coGrouper)
+					.name("first blocking step without track list").build();
+		} else {
+			firstBlockingStep = MapContract.builder(FirstBlockingStep.class)
 					.input(discs)
 					.name("first blocking step without track list").build();
+		}
 
 		ReduceContract countStep = new ReduceContract.Builder(CountStep.class,
 				PactString.class, BLOCKING_KEY_FIELD)
@@ -152,62 +170,26 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		MapContract balancedBlockFilter = MapContract
 				.builder(BalancedBlockFilterStep.class).input(countStep)
 				.name("filter balanced blocks step").build();
-		
-		ReduceContract matchStepReducerBalanced;
-		if (takeTracksIntoAccount) {
-			CoGroupContract coGrouperBalanced = CoGroupContract
-					.builder(CoGroupCDsWithTracks.class, PactInteger.class, 0,
-							0).name("Group CDs with Tracks").build();
 
-			coGrouperBalanced.setFirstInput(unbalancedBlockFilter);
-			coGrouperBalanced.setSecondInput(tracks);
-			
-			matchStepReducerBalanced = new ReduceContract.Builder(
-					MatchStep.class, PactString.class, BLOCKING_KEY_FIELD)
-					.keyField(PactString.class, BLOCKING_ID_FIELD)
-					.input(coGrouperBalanced).name("match step balanced")
-					.build();
-		} else{
-			matchStepReducerBalanced = new ReduceContract.Builder(
-					MatchStep.class, PactString.class, BLOCKING_KEY_FIELD)
-					.keyField(PactString.class, BLOCKING_ID_FIELD)
-					.input(unbalancedBlockFilter).name("match step balanced")
-					.build();
-		}
-		
+		ReduceContract matchStepReducerBalanced = new ReduceContract.Builder(
+				MatchStep.class, PactString.class, BLOCKING_KEY_FIELD)
+				.keyField(PactString.class, BLOCKING_ID_FIELD)
+				.input(unbalancedBlockFilter).name("match step balanced")
+				.build();
+
 		ReduceContract unionStep1 = new ReduceContract.Builder(UnionStep.class,
 				PactInteger.class, DUPLICATE_ID_1_FIELD)
 				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD)
-				.input(matchStepReducerBalanced)
-				.name("union step 1").build();
+				.input(matchStepReducerBalanced).name("union step 1").build();
 
-		ReduceContract sortedNeighbourhoodStep;
-		if (takeTracksIntoAccount) {
-			CoGroupContract coGrouperUnBalanced = CoGroupContract
-					.builder(CoGroupCDsWithTracks.class, PactInteger.class, 0,
-							0).name("Group CDs with Tracks").build();
-
-			coGrouperUnBalanced.setFirstInput(balancedBlockFilter);
-			coGrouperUnBalanced.setSecondInput(tracks);
-			
-			sortedNeighbourhoodStep = new ReduceContract.Builder(
-					SortedNeighbourhood.class, PactString.class, BLOCKING_KEY_FIELD)
-					.keyField(PactString.class, BLOCKING_ID_FIELD)
-					.secondaryOrder(
-							new Ordering(BLOCKING_KEY_EXTENDED_FIELD,
-									PactString.class, Order.ASCENDING))
-					.input(coGrouperUnBalanced).name("second blocking step")
-					.build();
-		} else{
-			sortedNeighbourhoodStep = new ReduceContract.Builder(
-					SortedNeighbourhood.class, PactString.class, BLOCKING_KEY_FIELD)
-					.keyField(PactString.class, BLOCKING_ID_FIELD)
-					.secondaryOrder(
-							new Ordering(BLOCKING_KEY_EXTENDED_FIELD,
-									PactString.class, Order.ASCENDING))
-					.input(balancedBlockFilter).name("second blocking step")
-					.build();
-		}
+		ReduceContract sortedNeighbourhoodStep = new ReduceContract.Builder(
+				SortedNeighbourhood.class, PactString.class, BLOCKING_KEY_FIELD)
+				.keyField(PactString.class, BLOCKING_ID_FIELD)
+				.secondaryOrder(
+						new Ordering(BLOCKING_KEY_EXTENDED_FIELD,
+								PactString.class, Order.ASCENDING))
+				.input(balancedBlockFilter).name("second blocking step")
+				.build();
 
 		ReduceContract unionStep2 = new ReduceContract.Builder(UnionStep.class,
 				PactInteger.class, DUPLICATE_ID_1_FIELD)
@@ -231,9 +213,8 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.keyField(PactString.class, BLOCKING_ID_FIELD)
 				.keyField(PactString.class, BLOCKING_KEY_FIELD)
 				.input(countStep).name("count output step").build();
-		
-		
-//		unionStep2.addInput(matchStepReducerBalanced);
+
+		// unionStep2.addInput(matchStepReducerBalanced);
 		// file output result
 		FileDataSink outResult = new FileDataSink(RecordOutputFormat.class,
 				output + "/result.csv", unionStep2, "Output Result");
@@ -261,21 +242,23 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.field(PactInteger.class, 0).field(PactString.class, 1)
 				.field(PactString.class, 2);
 		countOutput.setDegreeOfParallelism(1);
-//		FileDataSink blocksOutput = new FileDataSink(RecordOutputFormat.class,
-//				output + "/blocks.csv", countStep,
-//				"Output Block");
-//		RecordOutputFormat.configureRecordFormat(blocksOutput)
-//				.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
-//				.field(PactInteger.class, DISC_ID_FIELD).field(PactString.class, BLOCKING_KEY_FIELD)
-//				.field(PactString.class, BLOCKING_ID_FIELD);
-//		blocksOutput.setDegreeOfParallelism(1);
+		// FileDataSink blocksOutput = new
+		// FileDataSink(RecordOutputFormat.class,
+		// output + "/blocks.csv", countStep,
+		// "Output Block");
+		// RecordOutputFormat.configureRecordFormat(blocksOutput)
+		// .recordDelimiter('\n').fieldDelimiter(';').lenient(true)
+		// .field(PactInteger.class, DISC_ID_FIELD).field(PactString.class,
+		// BLOCKING_KEY_FIELD)
+		// .field(PactString.class, BLOCKING_ID_FIELD);
+		// blocksOutput.setDegreeOfParallelism(1);
 
 		// assemble the PACT plan
 		Collection<GenericDataSink> sinks = new HashSet<GenericDataSink>();
 		sinks.add(outResult);
 		sinks.add(outTruePositives);
 		sinks.add(countOutput);
-//		sinks.add(blocksOutput);
+		// sinks.add(blocksOutput);
 		Plan plan = new Plan(sinks, "MultiBlocking");
 		plan.setDefaultParallelism(noSubtasks);
 

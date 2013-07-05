@@ -24,9 +24,9 @@ public class SimilarityMeasure {;
 		positiveRules.add(GenreSimilarity.getInstance());
 		positiveRules.add(ReleaseYearSimilarity.getInstance());
 
-//		if(MultiBlocking.takeTracksIntoAccount){
-//			positiveRules.add(TracksSimilarity.getInstance());
-//		}
+		if(MultiBlocking.takeTracksIntoAccount){
+			positiveRules.add(TracksSimilarity.getInstance());
+		}
 		
 //		positiveRules.add(AlwaysTrueSimilarity.getInstance());
 	}
