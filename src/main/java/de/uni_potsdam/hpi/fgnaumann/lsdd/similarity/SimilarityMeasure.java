@@ -6,29 +6,26 @@ import java.util.Set;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking;
 import eu.stratosphere.pact.common.type.PactRecord;
 
-public class SimilarityMeasure {;
-	
+public class SimilarityMeasure {
+	;
+
 	static Set<NegativeRule> negativeRules = new HashSet<NegativeRule>();
 	static Set<PositiveRule> positiveRules = new HashSet<PositiveRule>();
 
 	static {
-		//negative rules
+		// negative rules
 		negativeRules.add(TrackNumberDifference.getInstance());
 		negativeRules.add(ReleaseYearDifference.getInstance());
 		negativeRules.add(XOrKeywords.getInstance());
-		
-		//positive rules
+
+		// positive rules
 		positiveRules.add(ArtistNameSimilarity.getInstance());
 		positiveRules.add(DiscTitleSimilarity.getInstance());
 		positiveRules.add(TrackNumberSimilarity.getInstance());
 		positiveRules.add(GenreSimilarity.getInstance());
 		positiveRules.add(ReleaseYearSimilarity.getInstance());
 
-		if(MultiBlocking.takeTracksIntoAccount){
-			positiveRules.add(TracksSimilarity.getInstance());
-		}
-		
-//		positiveRules.add(AlwaysTrueSimilarity.getInstance());
+		// positiveRules.add(AlwaysTrueSimilarity.getInstance());
 	}
 
 	public static boolean isDuplicate(PactRecord record1, PactRecord record2) {
@@ -43,11 +40,17 @@ public class SimilarityMeasure {;
 			similarity += pr.similarity(record1, record2) * pr.getWeight();
 			multiplierSum += pr.getWeight();
 		}
-		if(similarity/multiplierSum > MultiBlocking.SIMILARITY_THRESHOLD){
+		if (MultiBlocking.takeTracksIntoAccount && similarity / multiplierSum < MultiBlocking.SIMILARITY_THRESHOLD + 0.1
+				&& similarity / multiplierSum > MultiBlocking.SIMILARITY_THRESHOLD - 0.1) {
+			similarity += TracksSimilarity.getInstance().similarity(record1, record2) * TracksSimilarity.getInstance().getWeight();
+			multiplierSum += TracksSimilarity.getInstance().getWeight();
+		}
+
+		if (similarity / multiplierSum > MultiBlocking.SIMILARITY_THRESHOLD) {
 			return true;
-		}else{
+		} else {
 			return false;
 		}
-		 
+
 	}
 }

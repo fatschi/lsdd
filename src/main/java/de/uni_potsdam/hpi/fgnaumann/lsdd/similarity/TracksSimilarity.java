@@ -66,11 +66,25 @@ public class TracksSimilarity implements PositiveRule {
 				int trackNumberInner = trackList1Array[i].getField(
 						MultiBlocking.TRACK_NUMBER_FIELD, PactInteger.class)
 						.getValue();
+				
+				int trackDifference = (Math.abs(trackNumberOuter - trackNumberInner));
+				float differencePunishment = 0;
+				if (trackDifference == 0) {
+					differencePunishment = 1;
+				} else if (trackDifference == 1) {
+					differencePunishment = MultiBlocking.SIMILARITY_THRESHOLD + 0.1f;
+				} else if (trackDifference == 2) {
+					differencePunishment = MultiBlocking.SIMILARITY_THRESHOLD;
+				} else if (trackDifference == 3) {
+					differencePunishment = MultiBlocking.SIMILARITY_THRESHOLD - 0.1f;
+				} else {
+					differencePunishment = 0;
+				}
+				
 				float currentSimilarity = ((dist1.getSimilarity(trackNameOuter,
 						trackNameInner)
 						+ dist2.getSimilarity(trackNameOuter, trackNameInner) + dist3
-							.getSimilarity(trackNameOuter, trackNameInner)) / 3)
-						/ (Math.abs(trackNumberOuter - trackNumberInner) + 1);
+							.getSimilarity(trackNameOuter, trackNameInner)) / 3)*differencePunishment;
 				if (currentSimilarity > highest)
 					highest = currentSimilarity;
 			}
