@@ -74,6 +74,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static int MAX_WINDOW_SIZE = 25;
 	public static float SIMILARITY_THRESHOLD = 0.8f;
 	public static boolean takeTracksIntoAccount = true;
+	public static boolean buildTransitveClosure = true;
+	public static boolean outputBlockSizes = true;
+
 	public static int MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS
 			* MAX_BLOCK_SIZE;
 	public static int THRESHOLD = (int) Math.round(Math
@@ -81,6 +84,8 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 
 	@Override
 	public Plan getPlan(final String... args) {
+		Collection<GenericDataSink> sinks = new HashSet<GenericDataSink>();
+
 		final int noSubtasks;
 		final String inputFileDiscs;
 		final String inputFileTracks;
@@ -199,29 +204,58 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.input(sortedNeighbourhoodStep).name("union step 2").build();
 		unionStep2.addInput(unionStep1);
 		unionStep2.setDegreeOfParallelism(1);
-		
-		ReduceContract transitiveClosureStep = new ReduceContract.Builder(TransitiveClosureStep.class,
-				PactInteger.class, DUPLICATE_REDUCE_FIELD)
-				.input(unionStep2).name("transitive closure").build();
-		unionStep2.setDegreeOfParallelism(1);
 
-		MatchContract validatorStep = MatchContract
-				.builder(ValidatorStep.class, PactInteger.class,
-						DUPLICATE_ID_1_FIELD, DUPLICATE_ID_1_FIELD)
-				.input1(transitiveClosureStep)
-				.input2(gold)
-				.name("validator step")
-				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD,
-						DUPLICATE_ID_2_FIELD).build();
+		MatchContract validatorStep;
 
-		// debugging contracts
-		ReduceContract countOutputStep = new ReduceContract.Builder(
-				CountOutputStep.class, PactInteger.class, COUNT_FIELD)
-				.keyField(PactString.class, BLOCKING_ID_FIELD)
-				.keyField(PactString.class, BLOCKING_KEY_FIELD)
-				.input(countStep).name("count output step").build();
+		if (buildTransitveClosure) {
+			ReduceContract transitiveClosureStep = new ReduceContract.Builder(
+					TransitiveClosureStep.class, PactInteger.class,
+					DUPLICATE_REDUCE_FIELD).input(unionStep2)
+					.name("transitive closure").build();
+			unionStep2.setDegreeOfParallelism(1);
 
-		// unionStep2.addInput(matchStepReducerBalanced);
+			validatorStep = MatchContract
+					.builder(ValidatorStep.class, PactInteger.class,
+							DUPLICATE_ID_1_FIELD, DUPLICATE_ID_1_FIELD)
+					.input1(transitiveClosureStep)
+					.input2(gold)
+					.name("validator step")
+					.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD,
+							DUPLICATE_ID_2_FIELD).build();
+		} else {
+			validatorStep = MatchContract
+					.builder(ValidatorStep.class, PactInteger.class,
+							DUPLICATE_ID_1_FIELD, DUPLICATE_ID_1_FIELD)
+					.input1(unionStep2)
+					.input2(gold)
+					.name("validator step")
+					.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD,
+							DUPLICATE_ID_2_FIELD).build();
+		}
+
+		if (outputBlockSizes) {
+			// debugging contracts
+			ReduceContract countOutputStep = new ReduceContract.Builder(
+					CountOutputStep.class, PactInteger.class, COUNT_FIELD)
+					.keyField(PactString.class, BLOCKING_ID_FIELD)
+					.keyField(PactString.class, BLOCKING_KEY_FIELD)
+					.input(countStep).name("count output step").build();
+
+			FileDataSink countOutput = new FileDataSink(
+					RecordOutputFormat.class, output + "/block_size.csv",
+					countOutputStep, "output block sizes");
+
+			// debug outputs
+			// count output steps
+			RecordOutputFormat.configureRecordFormat(countOutput)
+					.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
+					.field(PactInteger.class, 0).field(PactString.class, 1)
+					.field(PactString.class, 2);
+			countOutput.setDegreeOfParallelism(1);
+
+			sinks.add(countOutput);
+		}
+
 		// file output result
 		FileDataSink outResult = new FileDataSink(RecordOutputFormat.class,
 				output + "/result.csv", unionStep2, "Output Result");
@@ -243,32 +277,9 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.field(PactInteger.class, DUPLICATE_REDUCE_FIELD);
 		outTruePositives.setDegreeOfParallelism(1);
 
-		// debug outputs
-		// count output steps
-		FileDataSink countOutput = new FileDataSink(RecordOutputFormat.class,
-				output + "/block_size.csv", countOutputStep,
-				"output block sizes");
-		RecordOutputFormat.configureRecordFormat(countOutput)
-				.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
-				.field(PactInteger.class, 0).field(PactString.class, 1)
-				.field(PactString.class, 2);
-		countOutput.setDegreeOfParallelism(1);
-		// FileDataSink blocksOutput = new
-		// FileDataSink(RecordOutputFormat.class,
-		// output + "/blocks.csv", countStep,
-		// "Output Block");
-		// RecordOutputFormat.configureRecordFormat(blocksOutput)
-		// .recordDelimiter('\n').fieldDelimiter(';').lenient(true)
-		// .field(PactInteger.class, DISC_ID_FIELD).field(PactString.class,
-		// BLOCKING_KEY_FIELD)
-		// .field(PactString.class, BLOCKING_ID_FIELD);
-		// blocksOutput.setDegreeOfParallelism(1);
-
 		// assemble the PACT plan
-		Collection<GenericDataSink> sinks = new HashSet<GenericDataSink>();
 		sinks.add(outResult);
 		sinks.add(outTruePositives);
-		sinks.add(countOutput);
 		// sinks.add(blocksOutput);
 		Plan plan = new Plan(sinks, "multiblocking");
 		plan.setDefaultParallelism(noSubtasks);
