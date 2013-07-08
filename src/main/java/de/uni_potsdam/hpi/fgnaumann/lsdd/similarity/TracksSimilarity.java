@@ -63,28 +63,29 @@ public class TracksSimilarity implements PositiveRule {
 				String trackNameInner = trackList2Array[k].getField(
 						MultiBlocking.TRACK_TITLE_FIELD, PactString.class)
 						.getValue();
-				int trackNumberInner = trackList1Array[i].getField(
+				int trackNumberInner = trackList2Array[k].getField(
 						MultiBlocking.TRACK_NUMBER_FIELD, PactInteger.class)
 						.getValue();
 				
 				int trackDifference = (Math.abs(trackNumberOuter - trackNumberInner));
-				float differencePunishment = 0;
+				float differencePunishmentFactor = 0;
 				if (trackDifference == 0) {
-					differencePunishment = 1;
+					differencePunishmentFactor = 1;
 				} else if (trackDifference == 1) {
-					differencePunishment = MultiBlocking.SIMILARITY_THRESHOLD + 0.1f;
+					differencePunishmentFactor = MultiBlocking.SIMILARITY_THRESHOLD + 0.1f;
 				} else if (trackDifference == 2) {
-					differencePunishment = MultiBlocking.SIMILARITY_THRESHOLD;
+					differencePunishmentFactor = MultiBlocking.SIMILARITY_THRESHOLD;
 				} else if (trackDifference == 3) {
-					differencePunishment = MultiBlocking.SIMILARITY_THRESHOLD - 0.1f;
+					differencePunishmentFactor = MultiBlocking.SIMILARITY_THRESHOLD - 0.1f;
 				} else {
-					differencePunishment = 0;
+					differencePunishmentFactor = 0;
 				}
 				
 				float currentSimilarity = ((dist1.getSimilarity(trackNameOuter,
 						trackNameInner)
 						+ dist2.getSimilarity(trackNameOuter, trackNameInner) + dist3
-							.getSimilarity(trackNameOuter, trackNameInner)) / 3)*differencePunishment;
+							.getSimilarity(trackNameOuter, trackNameInner)) / 3)*differencePunishmentFactor;
+				//float currentSimilarity = 0.7f;
 				if (currentSimilarity > highest)
 					highest = currentSimilarity;
 			}

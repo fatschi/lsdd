@@ -7,8 +7,9 @@ import de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking;
 import eu.stratosphere.pact.common.type.PactRecord;
 
 public class SimilarityMeasure {
-	;
 
+	private static final double CONFIDENCE_WINDOW = 0.1;
+	
 	static Set<NegativeRule> negativeRules = new HashSet<NegativeRule>();
 	static Set<PositiveRule> positiveRules = new HashSet<PositiveRule>();
 
@@ -16,7 +17,7 @@ public class SimilarityMeasure {
 		// negative rules
 		negativeRules.add(TrackNumberDifference.getInstance());
 		negativeRules.add(ReleaseYearDifference.getInstance());
-		negativeRules.add(XOrKeywords.getInstance());
+		negativeRules.add(XORKeywords.getInstance());
 
 		// positive rules
 		positiveRules.add(ArtistNameSimilarity.getInstance());
@@ -40,8 +41,8 @@ public class SimilarityMeasure {
 			similarity += pr.similarity(record1, record2) * pr.getWeight();
 			multiplierSum += pr.getWeight();
 		}
-		if (MultiBlocking.takeTracksIntoAccount && similarity / multiplierSum < MultiBlocking.SIMILARITY_THRESHOLD + 0.1
-				&& similarity / multiplierSum > MultiBlocking.SIMILARITY_THRESHOLD - 0.1) {
+		if (MultiBlocking.takeTracksIntoAccount && similarity / multiplierSum < MultiBlocking.SIMILARITY_THRESHOLD + CONFIDENCE_WINDOW
+				&& similarity / multiplierSum > MultiBlocking.SIMILARITY_THRESHOLD - CONFIDENCE_WINDOW) {
 			similarity += TracksSimilarity.getInstance().similarity(record1, record2) * TracksSimilarity.getInstance().getWeight();
 			multiplierSum += TracksSimilarity.getInstance().getWeight();
 		}

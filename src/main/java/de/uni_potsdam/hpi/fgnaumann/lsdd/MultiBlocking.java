@@ -14,6 +14,7 @@ import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CountStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.FirstBlockingStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.MatchStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.SortedNeighbourhood;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.TransitiveClosureStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.UnbalancedBlockFilterStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.UnionStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.ValidatorStep;
@@ -64,6 +65,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static final int TRACK_TITLE_FIELD = 2;
 	public static final int DUPLICATE_ID_1_FIELD = 0;
 	public static final int DUPLICATE_ID_2_FIELD = 1;
+	public static final int DUPLICATE_REDUCE_FIELD = 2;
 
 	// stats
 	private static int MAX_BLOCK_SIZE = 16352;
@@ -99,7 +101,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		// disc_id;freedbdiscid;"artist_name";"disc_title";"genre_title";"disc_released";disc_tracks;disc_seconds;"disc_language"
 		// 7;727827;"Tenacious D";"Tenacious D";"Humour";"2001";19;2843;"eng"
 		FileDataSource discs = new FileDataSource(DiscsInputFormat.class,
-				inputFileDiscs, "Discs");
+				inputFileDiscs, "discs");
 		DiscsInputFormat.configureRecordFormat(discs).recordDelimiter('\n')
 				.fieldDelimiter(';')
 				.field(DecimalTextIntParser.class, DISC_ID_FIELD) // disc_id
@@ -118,7 +120,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 			// disc_id;track_number;"track_title";"artist_name";track_seconds
 			// 2;1;"Intro+Chor Der Kriminalbeamten";"Kottans Kapelle";115
 			tracks = new FileDataSource(RecordInputFormat.class,
-					inputFileTracks, "Tracks");
+					inputFileTracks, "tracks");
 			RecordInputFormat.configureRecordFormat(tracks)
 					.recordDelimiter('\n').fieldDelimiter(';')
 					.field(DecimalTextIntParser.class, DISC_ID_FIELD) // disc_id
@@ -132,7 +134,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		// disc_id1;disc_id2
 		// 13;3163
 		FileDataSource gold = new FileDataSource(RecordInputFormat.class,
-				inputFileGold, "GoldStandard");
+				inputFileGold, "silver standard");
 		RecordInputFormat.configureRecordFormat(gold).recordDelimiter('\n')
 				.fieldDelimiter(';')
 				.field(DecimalTextIntParser.class, DUPLICATE_ID_1_FIELD) // disc_id1
@@ -144,7 +146,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		if (takeTracksIntoAccount) {
 			CoGroupContract coGrouper = CoGroupContract
 					.builder(CoGroupCDsWithTracks.class, PactInteger.class, 0,
-							0).name("Group CDs with Tracks").build();
+							0).name("join cds with tracks").build();
 
 			coGrouper.setFirstInput(discs);
 			coGrouper.setSecondInput(tracks);
@@ -197,12 +199,17 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.input(sortedNeighbourhoodStep).name("union step 2").build();
 		unionStep2.addInput(unionStep1);
 		unionStep2.setDegreeOfParallelism(1);
+		
+		ReduceContract transitiveClosureStep = new ReduceContract.Builder(TransitiveClosureStep.class,
+				PactInteger.class, DUPLICATE_REDUCE_FIELD)
+				.input(unionStep2).name("transitive closure").build();
+		unionStep2.setDegreeOfParallelism(1);
 
 		MatchContract validatorStep = MatchContract
 				.builder(ValidatorStep.class, PactInteger.class,
 						DUPLICATE_ID_1_FIELD, DUPLICATE_ID_1_FIELD)
-				.input1(gold)
-				.input2(unionStep2)
+				.input1(transitiveClosureStep)
+				.input2(gold)
 				.name("validator step")
 				.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD,
 						DUPLICATE_ID_2_FIELD).build();
@@ -220,23 +227,27 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				output + "/result.csv", unionStep2, "Output Result");
 		RecordOutputFormat.configureRecordFormat(outResult)
 				.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
-				.field(PactInteger.class, 0).field(PactInteger.class, 1);
+				.field(PactInteger.class, DUPLICATE_ID_1_FIELD)
+				.field(PactInteger.class, DUPLICATE_ID_2_FIELD)
+				.field(PactInteger.class, DUPLICATE_REDUCE_FIELD);
 		outResult.setDegreeOfParallelism(1);
 
 		// file output tp
 		FileDataSink outTruePositives = new FileDataSink(
 				RecordOutputFormat.class, output + "/tp.csv", validatorStep,
-				"Output True Positives");
+				"output true positives");
 		RecordOutputFormat.configureRecordFormat(outTruePositives)
 				.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
-				.field(PactInteger.class, 0).field(PactInteger.class, 1);
+				.field(PactInteger.class, DUPLICATE_ID_1_FIELD)
+				.field(PactInteger.class, DUPLICATE_ID_2_FIELD)
+				.field(PactInteger.class, DUPLICATE_REDUCE_FIELD);
 		outTruePositives.setDegreeOfParallelism(1);
 
 		// debug outputs
 		// count output steps
 		FileDataSink countOutput = new FileDataSink(RecordOutputFormat.class,
 				output + "/block_size.csv", countOutputStep,
-				"Output Block Sizes");
+				"output block sizes");
 		RecordOutputFormat.configureRecordFormat(countOutput)
 				.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
 				.field(PactInteger.class, 0).field(PactString.class, 1)
@@ -259,7 +270,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		sinks.add(outTruePositives);
 		sinks.add(countOutput);
 		// sinks.add(blocksOutput);
-		Plan plan = new Plan(sinks, "MultiBlocking");
+		Plan plan = new Plan(sinks, "multiblocking");
 		plan.setDefaultParallelism(noSubtasks);
 
 		return plan;

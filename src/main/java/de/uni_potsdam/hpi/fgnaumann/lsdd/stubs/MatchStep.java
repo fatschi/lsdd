@@ -33,7 +33,7 @@ public class MatchStep extends ReduceStub {
 				PactRecord r2 = r_temp.get(j);
 
 				if (SimilarityMeasure.isDuplicate(r1, r2)) {
-					DuplciateEmitter de = new DuplciateEmitter(out);
+					DuplciateEmitter de = new DuplciateEmitter(out, 0);
 					de.emitDuplicate(r1, r2);
 				}
 			}

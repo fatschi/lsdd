@@ -15,13 +15,17 @@ import eu.stratosphere.pact.common.type.base.PactInteger;
 
 public class DuplciateEmitter {
 	private Collector<PactRecord> out;
+	private PactInteger pipelineField;
 
-	public DuplciateEmitter(Collector<PactRecord> out) {
+	public DuplciateEmitter(Collector<PactRecord> out, int pipelineField) {
 		this.out = out;
+		this.pipelineField = new PactInteger(pipelineField);
 	}
 
 	public void emitDuplicate(PactRecord record1, PactRecord record2) {
 		PactRecord outputRecord = new PactRecord();
+		outputRecord.setField(MultiBlocking.DUPLICATE_REDUCE_FIELD,
+				this.pipelineField);
 		if (record1.getField(MultiBlocking.DISC_ID_FIELD, PactInteger.class).getValue() < record2
 				.getField(MultiBlocking.DISC_ID_FIELD, PactInteger.class).getValue()) {
 			outputRecord.setField(MultiBlocking.DUPLICATE_ID_1_FIELD,
