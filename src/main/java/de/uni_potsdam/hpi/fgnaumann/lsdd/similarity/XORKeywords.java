@@ -6,7 +6,7 @@ import eu.stratosphere.pact.common.type.base.PactString;
 
 public class XORKeywords implements NegativeRule{
     private static XORKeywords instance = null;
-    private static String[] titleKeywords = {"remix", "remaster", "vol.", "cd", "disc", "part", "collection"}; 
+    private static String[] titleKeywords = {"remix", "remaster", "vol.", "cd", "disc", "part", "collection", "flac"}; 
     private static String[] artistKeyWords = {"various"};
  
     private XORKeywords() {}

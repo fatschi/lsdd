@@ -9,6 +9,7 @@ import java.util.HashSet;
 
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.BalancedBlockFilterStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CoGroupCDsWithTracks;
+import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CountClosureSizeStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CountOutputStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CountStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.FirstBlockingStep;
@@ -73,9 +74,10 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static int MAX_WINDOW_FOR_LARGE_BLOCKS = 5;
 	public static int MAX_WINDOW_SIZE = 25;
 	public static float SIMILARITY_THRESHOLD = 0.8f;
-	public static boolean takeTracksIntoAccount = true;
+	public static boolean takeTracksIntoAccount = false;
 	public static boolean buildTransitveClosure = true;
-	public static boolean outputBlockSizes = true;
+	public static boolean outputBlockSizes = false;
+	public static boolean outputClosureSizes = false;
 
 	public static int MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS
 			* MAX_BLOCK_SIZE;
@@ -206,6 +208,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		unionStep2.setDegreeOfParallelism(1);
 
 		MatchContract validatorStep;
+		FileDataSink outResult;
 
 		if (buildTransitveClosure) {
 			ReduceContract transitiveClosureStep = new ReduceContract.Builder(
@@ -222,6 +225,37 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 					.name("validator step")
 					.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD,
 							DUPLICATE_ID_2_FIELD).build();
+
+			// file output result
+			outResult = new FileDataSink(RecordOutputFormat.class, output
+					+ "/result.csv", transitiveClosureStep, "Output Result");
+			RecordOutputFormat.configureRecordFormat(outResult)
+					.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
+					.field(PactInteger.class, DUPLICATE_ID_1_FIELD)
+					.field(PactInteger.class, DUPLICATE_ID_2_FIELD)
+					.field(PactInteger.class, DUPLICATE_REDUCE_FIELD);
+			outResult.setDegreeOfParallelism(1);
+
+			if (outputClosureSizes) {
+				// statistics contracts
+				ReduceContract countClosureSizeStep = new ReduceContract.Builder(
+						CountClosureSizeStep.class, PactInteger.class,
+						DUPLICATE_REDUCE_FIELD).input(transitiveClosureStep)
+						.name("count closure size step").build();
+
+				FileDataSink countClosureSizeOutput = new FileDataSink(
+						RecordOutputFormat.class, output + "/closure_size.csv",
+						countClosureSizeStep, "output block sizes");
+
+				RecordOutputFormat
+						.configureRecordFormat(countClosureSizeOutput)
+						.recordDelimiter('\n').fieldDelimiter(';')
+						.lenient(true).field(PactInteger.class, 0)
+						.field(PactInteger.class, 1);
+				countClosureSizeOutput.setDegreeOfParallelism(1);
+
+				sinks.add(countClosureSizeOutput);
+			}
 		} else {
 			validatorStep = MatchContract
 					.builder(ValidatorStep.class, PactInteger.class,
@@ -231,6 +265,15 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 					.name("validator step")
 					.keyField(PactInteger.class, DUPLICATE_ID_2_FIELD,
 							DUPLICATE_ID_2_FIELD).build();
+
+			outResult = new FileDataSink(RecordOutputFormat.class, output
+					+ "/result.csv", unionStep2, "Output Result");
+			RecordOutputFormat.configureRecordFormat(outResult)
+					.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
+					.field(PactInteger.class, DUPLICATE_ID_1_FIELD)
+					.field(PactInteger.class, DUPLICATE_ID_2_FIELD)
+					.field(PactInteger.class, DUPLICATE_REDUCE_FIELD);
+			outResult.setDegreeOfParallelism(1);
 		}
 
 		if (outputBlockSizes) {
@@ -255,16 +298,6 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 
 			sinks.add(countOutput);
 		}
-
-		// file output result
-		FileDataSink outResult = new FileDataSink(RecordOutputFormat.class,
-				output + "/result.csv", unionStep2, "Output Result");
-		RecordOutputFormat.configureRecordFormat(outResult)
-				.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
-				.field(PactInteger.class, DUPLICATE_ID_1_FIELD)
-				.field(PactInteger.class, DUPLICATE_ID_2_FIELD)
-				.field(PactInteger.class, DUPLICATE_REDUCE_FIELD);
-		outResult.setDegreeOfParallelism(1);
 
 		// file output tp
 		FileDataSink outTruePositives = new FileDataSink(
