@@ -74,7 +74,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static int MAX_WINDOW_SIZE = 25;
 	public static float SIMILARITY_THRESHOLD = 0.75f;
 	public static boolean takeTracksIntoAccount = true;
-	public static boolean buildTransitveClosure = false;
+	public static boolean buildTransitveClosure = true;
 	public static boolean outputBlockSizes = false;
 
 	public static int MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS
@@ -228,7 +228,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 			outResult = new FileDataSink(RecordOutputFormat.class, output
 					+ "/result.csv", transitiveClosureStep, "Output Result");
 			RecordOutputFormat.configureRecordFormat(outResult)
-					.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
+					.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
 					.field(PactInteger.class, DUPLICATE_ID_1_FIELD)
 					.field(PactInteger.class, DUPLICATE_ID_2_FIELD)
 					.field(PactInteger.class, DUPLICATE_REDUCE_FIELD);
@@ -247,7 +247,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 			outResult = new FileDataSink(RecordOutputFormat.class, output
 					+ "/result.csv", unionStep2, "Output Result");
 			RecordOutputFormat.configureRecordFormat(outResult)
-					.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
+					.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
 					.field(PactInteger.class, DUPLICATE_ID_1_FIELD)
 					.field(PactInteger.class, DUPLICATE_ID_2_FIELD)
 					.field(PactInteger.class, DUPLICATE_REDUCE_FIELD);
@@ -282,7 +282,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				RecordOutputFormat.class, output + "/tp.csv", validatorStep,
 				"output true positives");
 		RecordOutputFormat.configureRecordFormat(outTruePositives)
-				.recordDelimiter('\n').fieldDelimiter(' ').lenient(true)
+				.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
 				.field(PactInteger.class, DUPLICATE_ID_1_FIELD)
 				.field(PactInteger.class, DUPLICATE_ID_2_FIELD)
 				.field(PactInteger.class, DUPLICATE_REDUCE_FIELD);

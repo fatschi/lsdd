@@ -17,7 +17,7 @@ public class SimilarityMeasure {
 		// negative rules
 		negativeRules.add(TrackNumberDifference.getInstance());
 		negativeRules.add(ReleaseYearDifference.getInstance());
-		negativeRules.add(XORKeywords.getInstance());
+		//negativeRules.add(XORKeywords.getInstance());
 
 		// positive rules
 		positiveRules.add(ArtistNameSimilarity.getInstance());
