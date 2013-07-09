@@ -9,7 +9,6 @@ import java.util.HashSet;
 
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.BalancedBlockFilterStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CoGroupCDsWithTracks;
-import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CountClosureSizeStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CountOutputStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.CountStep;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.stubs.FirstBlockingStep;
@@ -75,9 +74,8 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static int MAX_WINDOW_SIZE = 25;
 	public static float SIMILARITY_THRESHOLD = 0.75f;
 	public static boolean takeTracksIntoAccount = true;
-	public static boolean buildTransitveClosure = true;
+	public static boolean buildTransitveClosure = false;
 	public static boolean outputBlockSizes = false;
-	public static boolean outputClosureSizes = true;
 
 	public static int MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS
 			* MAX_BLOCK_SIZE;
@@ -236,26 +234,6 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 					.field(PactInteger.class, DUPLICATE_REDUCE_FIELD);
 			outResult.setDegreeOfParallelism(1);
 
-			if (outputClosureSizes) {
-				// statistics contracts
-				ReduceContract countClosureSizeStep = new ReduceContract.Builder(
-						CountClosureSizeStep.class, PactInteger.class,
-						DUPLICATE_REDUCE_FIELD).input(transitiveClosureStep)
-						.name("count closure size step").build();
-
-				FileDataSink countClosureSizeOutput = new FileDataSink(
-						RecordOutputFormat.class, output + "/closure_size.csv",
-						countClosureSizeStep, "output block sizes");
-
-				RecordOutputFormat
-						.configureRecordFormat(countClosureSizeOutput)
-						.recordDelimiter('\n').fieldDelimiter(';')
-						.lenient(true).field(PactInteger.class, 0)
-						.field(PactInteger.class, 1);
-				countClosureSizeOutput.setDegreeOfParallelism(1);
-
-				sinks.add(countClosureSizeOutput);
-			}
 		} else {
 			validatorStep = MatchContract
 					.builder(ValidatorStep.class, PactInteger.class,

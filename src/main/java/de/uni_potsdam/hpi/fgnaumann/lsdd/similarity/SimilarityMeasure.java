@@ -26,7 +26,7 @@ public class SimilarityMeasure {
 		positiveRules.add(GenreSimilarity.getInstance());
 		positiveRules.add(ReleaseYearSimilarity.getInstance());
 
-		// positiveRules.add(AlwaysTrueSimilarity.getInstance());
+//		positiveRules.add(AlwaysTrueSimilarity.getInstance());
 	}
 
 	public static boolean isDuplicate(PactRecord record1, PactRecord record2) {

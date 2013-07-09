@@ -42,10 +42,11 @@ public class TransitiveClosureStep extends ReduceStub {
 	}
 	
 	public void outPutTransitiveClosureForTuple(Integer key, Collector<PactRecord> out) {
+		PactInteger closureSize = new PactInteger(this.duplicates.get(key).size());
 		for(Integer value : this.duplicates.get(key).tailSet(key+1)) {
 			this.outPut.setField(MultiBlocking.DUPLICATE_ID_1_FIELD, new PactInteger(key));
 			this.outPut.setField(MultiBlocking.DUPLICATE_ID_2_FIELD, new PactInteger(value));
-			this.outPut.setField(MultiBlocking.DUPLICATE_REDUCE_FIELD, new PactInteger(this.duplicates.get(key).first()));
+			this.outPut.setField(MultiBlocking.DUPLICATE_REDUCE_FIELD, closureSize);
 			out.collect(this.outPut.createCopy());
 		}
 	}
