@@ -24,7 +24,7 @@ public class DuplciateEmitter {
 
 	public void emitDuplicate(PactRecord record1, PactRecord record2) {
 		PactRecord outputRecord = new PactRecord();
-		outputRecord.setField(MultiBlocking.DUPLICATE_REDUCE_FIELD,
+		outputRecord.setField(MultiBlocking.DUPLICATE_REDUCE1_FIELD,
 				this.pipelineField);
 		if (record1.getField(MultiBlocking.DISC_ID_FIELD, PactInteger.class).getValue() < record2
 				.getField(MultiBlocking.DISC_ID_FIELD, PactInteger.class).getValue()) {

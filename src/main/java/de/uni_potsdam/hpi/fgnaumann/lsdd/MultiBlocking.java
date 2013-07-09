@@ -65,7 +65,8 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static final int TRACK_TITLE_FIELD = 2;
 	public static final int DUPLICATE_ID_1_FIELD = 0;
 	public static final int DUPLICATE_ID_2_FIELD = 1;
-	public static final int DUPLICATE_REDUCE_FIELD = 2;
+	public static final int DUPLICATE_REDUCE1_FIELD = 2;
+	public static final int DUPLICATE_REDUCE2_FIELD = 3;
 
 	// stats
 	private static int MAX_BLOCK_SIZE = 16352;
@@ -211,7 +212,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 		if (buildTransitveClosure) {
 			ReduceContract transitiveClosureStep = new ReduceContract.Builder(
 					TransitiveClosureStep.class, PactInteger.class,
-					DUPLICATE_REDUCE_FIELD).input(unionStep2)
+					DUPLICATE_REDUCE1_FIELD).input(unionStep2)
 					.name("transitive closure").build();
 			transitiveClosureStep.setDegreeOfParallelism(1);
 
@@ -231,7 +232,8 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 					.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
 					.field(PactInteger.class, DUPLICATE_ID_1_FIELD)
 					.field(PactInteger.class, DUPLICATE_ID_2_FIELD)
-					.field(PactInteger.class, DUPLICATE_REDUCE_FIELD);
+					.field(PactInteger.class, DUPLICATE_REDUCE1_FIELD)
+					.field(PactInteger.class, DUPLICATE_REDUCE2_FIELD);
 			outResult.setDegreeOfParallelism(1);
 
 		} else {
@@ -250,7 +252,8 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 					.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
 					.field(PactInteger.class, DUPLICATE_ID_1_FIELD)
 					.field(PactInteger.class, DUPLICATE_ID_2_FIELD)
-					.field(PactInteger.class, DUPLICATE_REDUCE_FIELD);
+					.field(PactInteger.class, DUPLICATE_REDUCE1_FIELD)
+					.field(PactInteger.class, DUPLICATE_REDUCE2_FIELD);
 			outResult.setDegreeOfParallelism(1);
 		}
 
@@ -285,7 +288,8 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 				.recordDelimiter('\n').fieldDelimiter(';').lenient(true)
 				.field(PactInteger.class, DUPLICATE_ID_1_FIELD)
 				.field(PactInteger.class, DUPLICATE_ID_2_FIELD)
-				.field(PactInteger.class, DUPLICATE_REDUCE_FIELD);
+				.field(PactInteger.class, DUPLICATE_REDUCE1_FIELD)
+				.field(PactInteger.class, DUPLICATE_REDUCE2_FIELD);
 		outTruePositives.setDegreeOfParallelism(1);
 
 		// assemble the PACT plan
