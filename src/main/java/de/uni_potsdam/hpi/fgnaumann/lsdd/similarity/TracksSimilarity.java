@@ -2,8 +2,6 @@ package de.uni_potsdam.hpi.fgnaumann.lsdd.similarity;
 
 import uk.ac.shef.wit.simmetrics.similaritymetrics.AbstractStringMetric;
 import uk.ac.shef.wit.simmetrics.similaritymetrics.JaccardSimilarity;
-import uk.ac.shef.wit.simmetrics.similaritymetrics.JaroWinkler;
-import uk.ac.shef.wit.simmetrics.similaritymetrics.Levenshtein;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.MultiBlocking;
 import de.uni_potsdam.hpi.fgnaumann.lsdd.TrackList;
 import eu.stratosphere.pact.common.type.PactRecord;
@@ -14,9 +12,7 @@ public class TracksSimilarity implements PositiveRule {
 	private static final int WINDOW_SIZE = 3;
 
 	private static TracksSimilarity instance = null;
-	private static AbstractStringMetric dist1 = new Levenshtein();
-	private static AbstractStringMetric dist2 = new JaroWinkler();
-	private static AbstractStringMetric dist3 = new JaccardSimilarity();
+	private static AbstractStringMetric distance = new JaccardSimilarity();
 
 	private TracksSimilarity() {
 	}
@@ -34,11 +30,15 @@ public class TracksSimilarity implements PositiveRule {
 
 		TrackList trackList1 = record1.getField(MultiBlocking.TRACKS_FIELD,
 				TrackList.class);
+		if (trackList1.size() == 0)
+			return 0f;
 		PactRecord[] trackList1Array = new PactRecord[trackList1.size()];
 		trackList1.toArray(trackList1Array);
 
 		TrackList trackList2 = record2.getField(MultiBlocking.TRACKS_FIELD,
 				TrackList.class);
+		if (trackList2.size() == 0)
+			return 0f;
 		PactRecord[] trackList2Array = new PactRecord[trackList2.size()];
 		trackList2.toArray(trackList2Array);
 
@@ -66,26 +66,20 @@ public class TracksSimilarity implements PositiveRule {
 				int trackNumberInner = trackList2Array[k].getField(
 						MultiBlocking.TRACK_NUMBER_FIELD, PactInteger.class)
 						.getValue();
-				
-				int trackDifference = (Math.abs(trackNumberOuter - trackNumberInner));
+
+				int trackDifference = Math.abs(trackNumberOuter
+						- trackNumberInner);
+				final int maxDifference = Math.min(trackNumberOuter,
+						trackNumberInner);
 				float differencePunishmentFactor = 0;
-				if (trackDifference == 0) {
-					differencePunishmentFactor = 1;
-				} else if (trackDifference == 1) {
-					differencePunishmentFactor = MultiBlocking.SIMILARITY_THRESHOLD + 0.1f;
-				} else if (trackDifference == 2) {
-					differencePunishmentFactor = MultiBlocking.SIMILARITY_THRESHOLD;
-				} else if (trackDifference == 3) {
-					differencePunishmentFactor = MultiBlocking.SIMILARITY_THRESHOLD - 0.1f;
-				} else {
-					differencePunishmentFactor = 0;
+				if (trackDifference <= maxDifference) {
+					differencePunishmentFactor = 1 - trackDifference
+							/ maxDifference;
 				}
-				
-				float currentSimilarity = ((dist1.getSimilarity(trackNameOuter,
-						trackNameInner)
-						+ dist2.getSimilarity(trackNameOuter, trackNameInner) + dist3
-							.getSimilarity(trackNameOuter, trackNameInner)) / 3)*differencePunishmentFactor;
-				//float currentSimilarity = 0.7f;
+
+				float currentSimilarity = ((distance.getSimilarity(trackNameOuter,
+						trackNameInner)) / 1) * differencePunishmentFactor;
+				// float currentSimilarity = 0.7f;
 				if (currentSimilarity > highest)
 					highest = currentSimilarity;
 			}
@@ -96,7 +90,7 @@ public class TracksSimilarity implements PositiveRule {
 		else
 			return similarity / i;
 	}
-	
+
 	@Override
 	public int getWeight() {
 		return 5;

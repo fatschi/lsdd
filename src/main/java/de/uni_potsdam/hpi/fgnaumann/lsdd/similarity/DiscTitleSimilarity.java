@@ -15,7 +15,7 @@ public class DiscTitleSimilarity implements PositiveRule {
 	private static AbstractStringMetric dist2 = new JaroWinkler();
 	private static AbstractStringMetric dist3 = new JaccardSimilarity();
 	// edge cases
-	private static String[] titleKeywords = { "greatest hits", "best" , "live"};
+	private static String[] titleKeywords = { "greatest hits", "best"};
 
 	private DiscTitleSimilarity() {
 	}
