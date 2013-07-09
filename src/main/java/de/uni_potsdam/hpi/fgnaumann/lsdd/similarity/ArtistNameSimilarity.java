@@ -38,6 +38,6 @@ public class ArtistNameSimilarity implements PositiveRule {
 
 	@Override
 	public int getWeight() {
-		return 5;
+		return 7;
 	}
 }

@@ -11,28 +11,29 @@ import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactInteger;
 
 /**
- * Reducer that counts the entries of each block to identify unbalanced
- * blocks
+ * Reducer that counts the entries of each block to identify unbalanced blocks
  * 
  * @author richard.meissner@student.hpi.uni-potsdam.de
  * @author fabian.tschirschnitz@student.hpi.uni-potsdam.de
  * 
  */
-public class CountStep extends ReduceStub {
+public class CountClosureSizeStep extends ReduceStub {
 	@Override
-	public void reduce(Iterator<PactRecord> records,
-			Collector<PactRecord> out) throws Exception {
+	public void reduce(Iterator<PactRecord> records, Collector<PactRecord> out)
+			throws Exception {
+		PactRecord record = records.next();
+		PactRecord outputRecord = new PactRecord();
+		outputRecord.setField(0, record.getField(
+				MultiBlocking.DUPLICATE_REDUCE_FIELD, PactInteger.class));
+
 		List<PactRecord> r_temp = new ArrayList<PactRecord>();
-		int sum = 0;
+		int sum = 1;
 		while (records.hasNext()) {
 			r_temp.add(records.next().createCopy());
 			sum++;
 		}
-		PactInteger cnt = new PactInteger();
-		cnt.setValue(sum);
-		for (PactRecord r : r_temp) {
-			r.setField(MultiBlocking.COUNT_FIELD, cnt);
-			out.collect(r);
-		}
+		outputRecord.setField(1, new PactInteger(sum));
+
+		out.collect(outputRecord);
 	}
 }

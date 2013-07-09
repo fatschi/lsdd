@@ -9,10 +9,13 @@ import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactString;
 
 public class DiscTitleSimilarity implements PositiveRule {
+	private static final float EDGE_CASE_PUNISHMENT_FACTOR = 0.75f;
 	private static DiscTitleSimilarity instance = null;
 	private static AbstractStringMetric dist1 = new Levenshtein();
 	private static AbstractStringMetric dist2 = new JaroWinkler();
 	private static AbstractStringMetric dist3 = new JaccardSimilarity();
+	// edge cases
+	private static String[] titleKeywords = { "greatest hits", "best" , "live"};
 
 	private DiscTitleSimilarity() {
 	}
@@ -26,14 +29,23 @@ public class DiscTitleSimilarity implements PositiveRule {
 
 	@Override
 	public float similarity(PactRecord record1, PactRecord record2) {
+
 		String discTitle1 = record1.getField(MultiBlocking.DISC_TITLE_FIELD,
 				PactString.class).getValue();
 		String discTitle2 = record2.getField(MultiBlocking.DISC_TITLE_FIELD,
 				PactString.class).getValue();
 
-		return (dist1.getSimilarity(discTitle1, discTitle2)
+		float edgeCasePunishmentMultiplier = 1f;
+		for (String keyword : titleKeywords) {
+			if ((discTitle1.toLowerCase().contains(keyword) || discTitle2
+					.toLowerCase().contains(keyword)))
+				edgeCasePunishmentMultiplier = EDGE_CASE_PUNISHMENT_FACTOR;
+		}
+
+		return ((dist1.getSimilarity(discTitle1, discTitle2)
 				+ dist2.getSimilarity(discTitle1, discTitle2) + dist3
-					.getSimilarity(discTitle1, discTitle2)) / 3;
+					.getSimilarity(discTitle1, discTitle2)) / 3)
+				* edgeCasePunishmentMultiplier;
 	}
 
 	@Override
