@@ -1,0 +1,11 @@
+Similarities/AllSimilaritiesWithoutTracks/>> True-Positives: 39364 (72.50%) Vergleiche: 344 587 << 55 Sek Laufzeit
+
+Similarities/AlwaysTrueWithoutTracks/>> True-Positives: 53037 (97.69%) Vergleiche: 42 667 126
+Similarities/AlwaysTrueWithTracks/>> True-Positives: 53041 (97.70%) Vergleiche: 42 664 057
+
+
+Similarities/AlwaysTrueWithNegativeRules/>> True-Positives: 43357 (79.86%) Vergleiche: 3 633 489
+
+Similarities/AlwaysTrueReleaseYearDifference/>> True-Positives: 52967 (97.56%) Vergleiche: 18 627 603
+Similarities/AlwaysTrueTrackNumberDifference/>> True-Positives: 50892 (93.74%) Vergleiche: 18 146 433
+Similarities/AlwaysTrueXOrKeywords/>> True-Positives: 45451 (83.72%) Vergleiche: 9 969 935

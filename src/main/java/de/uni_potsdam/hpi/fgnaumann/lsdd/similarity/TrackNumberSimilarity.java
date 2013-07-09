@@ -23,18 +23,15 @@ public class TrackNumberSimilarity implements PositiveRule {
 				MultiBlocking.DISC_TRACKS_FIELD, PactInteger.class).getValue();
 		int record2DiscTracks = record2.getField(
 				MultiBlocking.DISC_TRACKS_FIELD, PactInteger.class).getValue();
+		
 		int trackDifference = Math.abs(record2DiscTracks - record1DiscTracks);
-		if (trackDifference == 0) {
-			return 1;
-		} else if (trackDifference == 1) {
-			return MultiBlocking.SIMILARITY_THRESHOLD + 0.1f;
-		} else if (trackDifference == 2) {
-			return MultiBlocking.SIMILARITY_THRESHOLD;
-		} else if (trackDifference == 3) {
-			return MultiBlocking.SIMILARITY_THRESHOLD - 0.1f;
-		} else {
+		final int maxDifference = Math.min(record2DiscTracks, record1DiscTracks);
+		if(trackDifference <= maxDifference){
+			return 1 - trackDifference/maxDifference;
+		}else {
 			return 0;
 		}
+		
 
 	}
 

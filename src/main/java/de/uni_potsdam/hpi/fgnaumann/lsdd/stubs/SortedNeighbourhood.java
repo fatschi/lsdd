@@ -45,6 +45,7 @@ public class SortedNeighbourhood extends ReduceStub {
 		while (record != null) {
 			for (PactRecord recordToCompare : recordsQueue) {
 				if (SimilarityMeasure.isDuplicate(record, recordToCompare)) {
+					//write a 0 as reducer key for transitive closure 
 					DuplciateEmitter de = new DuplciateEmitter(out, 0);
 					de.emitDuplicate(record, recordToCompare);
 				}

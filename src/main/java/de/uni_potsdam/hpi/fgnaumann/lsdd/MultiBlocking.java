@@ -62,7 +62,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	public static final int BLOCKING_ID_FIELD = 11;
 	public static final int BLOCKING_KEY_EXTENDED_FIELD = 12;
 	public static final int COUNT_FIELD = 13;
-	public static final int TRACK_NUMBER_FIELD = 2;
+	public static final int TRACK_NUMBER_FIELD = 1;
 	public static final int TRACK_TITLE_FIELD = 2;
 	public static final int DUPLICATE_ID_1_FIELD = 0;
 	public static final int DUPLICATE_ID_2_FIELD = 1;
@@ -73,11 +73,11 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	// parameters
 	public static int MAX_WINDOW_FOR_LARGE_BLOCKS = 5;
 	public static int MAX_WINDOW_SIZE = 25;
-	public static float SIMILARITY_THRESHOLD = 0.8f;
-	public static boolean takeTracksIntoAccount = false;
-	public static boolean buildTransitveClosure = false;
+	public static float SIMILARITY_THRESHOLD = 0.75f;
+	public static boolean takeTracksIntoAccount = true;
+	public static boolean buildTransitveClosure = true;
 	public static boolean outputBlockSizes = false;
-	public static boolean outputClosureSizes = false;
+	public static boolean outputClosureSizes = true;
 
 	public static int MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS
 			* MAX_BLOCK_SIZE;
@@ -215,7 +215,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 					TransitiveClosureStep.class, PactInteger.class,
 					DUPLICATE_REDUCE_FIELD).input(unionStep2)
 					.name("transitive closure").build();
-			unionStep2.setDegreeOfParallelism(1);
+			transitiveClosureStep.setDegreeOfParallelism(1);
 
 			validatorStep = MatchContract
 					.builder(ValidatorStep.class, PactInteger.class,
