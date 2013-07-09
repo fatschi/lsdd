@@ -73,11 +73,11 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 	// parameters
 	public static int MAX_WINDOW_FOR_LARGE_BLOCKS = 5;
 	public static int MAX_WINDOW_SIZE = 25;
-	public static float SIMILARITY_THRESHOLD = 0.8f;
+	public static float SIMILARITY_THRESHOLD = 0.75f;
 	public static boolean takeTracksIntoAccount = true;
-	public static boolean buildTransitveClosure = false;
+	public static boolean buildTransitveClosure = true;
 	public static boolean outputBlockSizes = false;
-	public static boolean outputClosureSizes = false;
+	public static boolean outputClosureSizes = true;
 
 	public static int MAXIMUM_COMPARISON = MAX_WINDOW_FOR_LARGE_BLOCKS
 			* MAX_BLOCK_SIZE;
@@ -215,7 +215,7 @@ public class MultiBlocking implements PlanAssembler, PlanAssemblerDescription {
 					TransitiveClosureStep.class, PactInteger.class,
 					DUPLICATE_REDUCE_FIELD).input(unionStep2)
 					.name("transitive closure").build();
-			unionStep2.setDegreeOfParallelism(1);
+			transitiveClosureStep.setDegreeOfParallelism(1);
 
 			validatorStep = MatchContract
 					.builder(ValidatorStep.class, PactInteger.class,

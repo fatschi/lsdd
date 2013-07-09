@@ -36,11 +36,11 @@ public class DiscTitleSimilarity implements PositiveRule {
 				PactString.class).getValue();
 
 		float edgeCasePunishmentMultiplier = 1f;
-		for (String keyword : titleKeywords) {
+		/*for (String keyword : titleKeywords) {
 			if ((discTitle1.toLowerCase().contains(keyword) || discTitle2
 					.toLowerCase().contains(keyword)))
 				edgeCasePunishmentMultiplier = EDGE_CASE_PUNISHMENT_FACTOR;
-		}
+		}*/
 
 		return ((dist1.getSimilarity(discTitle1, discTitle2)
 				+ dist2.getSimilarity(discTitle1, discTitle2) + dist3
@@ -50,6 +50,6 @@ public class DiscTitleSimilarity implements PositiveRule {
 
 	@Override
 	public int getWeight() {
-		return 7;
+		return 10;
 	}
 }

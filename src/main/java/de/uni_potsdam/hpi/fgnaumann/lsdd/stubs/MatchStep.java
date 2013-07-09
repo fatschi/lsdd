@@ -33,6 +33,7 @@ public class MatchStep extends ReduceStub {
 				PactRecord r2 = r_temp.get(j);
 
 				if (SimilarityMeasure.isDuplicate(r1, r2)) {
+					//write a 0 as reducer key for transitive closure
 					DuplciateEmitter de = new DuplciateEmitter(out, 0);
 					de.emitDuplicate(r1, r2);
 				}

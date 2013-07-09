@@ -1,0 +1,8 @@
+		no tracks	tracks	tracks+tc
+
+40: 	41 s		153 s	182 s
+20: 	37 s		141 s	163 s
+10: 	56 s		162 s	192 s
+5: 		98 s		318 s	381 s
+2: 		221 s		812 s	924 s
+1: 		519 s		1618 s	1870 s

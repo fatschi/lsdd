@@ -5,6 +5,7 @@ import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactString;
 
 public class ReleaseYearSimilarity implements PositiveRule {
+	private static final int MAX_RELEASE_DIFFERENCE = 10;
 	private static ReleaseYearSimilarity instance = null;
 
 	private ReleaseYearSimilarity() {
@@ -27,8 +28,15 @@ public class ReleaseYearSimilarity implements PositiveRule {
 				.getValue().toLowerCase();
 		if (!record1DiscRelease.isEmpty() && !record2DiscRelease.isEmpty()) {
 			try {
-				return 1f / (Math.abs(Integer.valueOf(record1DiscRelease)
-						- Integer.valueOf(record2DiscRelease)) + 1);
+				int releaseDifference = (Math.abs(Integer
+						.valueOf(record1DiscRelease)
+						- Integer.valueOf(record2DiscRelease)));
+				final int maxDifference = MAX_RELEASE_DIFFERENCE;
+				if (releaseDifference <= maxDifference) {
+					return 1 - releaseDifference / maxDifference;
+				} else {
+					return 0;
+				}
 			} catch (NumberFormatException nfe) {
 			}
 		}
